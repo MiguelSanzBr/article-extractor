@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// instalado como dependência (vendor/miguelsanzbr/article-extractor/bin) ou rodando no próprio repo
+foreach ([__DIR__ . '/../../../autoload.php', __DIR__ . '/../vendor/autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+exit(ArticleExtractor\Cli::run(array_values($argv), (string) stream_get_contents(STDIN), STDOUT, STDERR));

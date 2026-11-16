@@ -5,11 +5,6 @@ declare(strict_types=1);
 use ArticleExtractor\Block;
 use ArticleExtractor\Extractor;
 
-function htmlFixture(string $name): string
-{
-    return (string) file_get_contents(__DIR__ . "/../Fixtures/html/{$name}.html");
-}
-
 /** @return list<Block> */
 function bodyBlocks(ArticleExtractor\Article $article): array
 {

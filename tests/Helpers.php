@@ -36,3 +36,8 @@ function blockTypes(array $blocks): array
 {
     return array_map(static fn(ArticleExtractor\Block $b): string => $b->type->value, $blocks);
 }
+
+function htmlFixture(string $name): string
+{
+    return (string) file_get_contents(__DIR__ . "/Fixtures/html/{$name}.html");
+}
