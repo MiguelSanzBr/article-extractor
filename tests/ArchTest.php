@@ -19,3 +19,7 @@ arch('fontes de metadado implementam a interface')
     ->classes()
     ->toImplement(ArticleExtractor\MetadataSources\MetadataSource::class)
     ->ignoring([ArticleExtractor\MetadataSources\MetadataExtractor::class, ArticleExtractor\MetadataSources\Fields::class]);
+
+arch('estratégias implementam ContentStrategy')
+    ->expect('ArticleExtractor\Content\Strategy')
+    ->toImplement(ArticleExtractor\Content\ContentStrategy::class);
