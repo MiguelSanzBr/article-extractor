@@ -23,9 +23,8 @@ final class ParagraphFallback implements ContentStrategy
 
     public function extract(Page $page): array
     {
-        $body = $page->document->body;
-        $blocks = $body === null ? [] : array_values(array_filter(
-            BlockExtractor::fromElement($body),
+        $blocks = array_values(array_filter(
+            BlockExtractor::fromElement($page->body()),
             static fn(Block $block): bool => $block->type === BlockType::Paragraph,
         ));
 

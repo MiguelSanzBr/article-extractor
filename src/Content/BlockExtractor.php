@@ -16,7 +16,10 @@ use Dom\HTMLDocument;
  */
 final class BlockExtractor
 {
-    private const string CANDIDATES = 'p, h2, h3, h4, h5, h6, li, blockquote, figcaption';
+    private const array CANDIDATE_TAGS = ['p', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'blockquote', 'figcaption'];
+
+    /** ancestrais que mudam o que um bloco é */
+    private const array CONTEXT_TAGS = ['a', 'li', 'blockquote', 'figcaption'];
 
     private const int MIN_HEADING = 3;
 
@@ -31,18 +34,42 @@ final class BlockExtractor
      */
     public static function fromElement(Element $container): array
     {
-        $clone = NoiseRules::cleanCopy($container);
         $blocks = [];
         $seen = [];
-        foreach ($clone->querySelectorAll(self::CANDIDATES) as $element) {
-            $block = self::block($element);
-            if ($block !== null && !in_array($key = mb_strtolower($block->text), $seen, true)) {
-                $seen[] = $key;
+        foreach (self::candidates(NoiseRules::cleanCopy($container)) as [$element, $context]) {
+            $block = self::block($element, $context);
+            if ($block !== null && !isset($seen[$key = mb_strtolower($block->text)])) {
+                $seen[$key] = $block;
                 $blocks[] = $block;
             }
         }
 
         return $blocks;
+    }
+
+    /**
+     * Candidatos em ordem de documento, cada um com o que há acima dele (link, item,
+     * citação, legenda). Uma passada só: perguntar closest() por nó fica quadrático em
+     * página com aninhamento fundo.
+     *
+     * @return list<array{Element, array<string, string>}>
+     */
+    private static function candidates(Element $root): array
+    {
+        $found = [];
+        $stack = [[$root, []]];
+        while ($stack !== []) {
+            [$element, $above] = array_pop($stack);
+            if ($element !== $root && in_array($element->localName, self::CANDIDATE_TAGS, true)) {
+                $found[] = [$element, $above];
+            }
+            $below = in_array($element->localName, self::CONTEXT_TAGS, true) ? $above + [$element->localName => $element->localName] : $above;
+            for ($child = $element->lastElementChild; $child !== null; $child = $child->previousElementSibling) {
+                $stack[] = [$child, $below];
+            }
+        }
+
+        return $found;
     }
 
     /**
@@ -78,16 +105,24 @@ final class BlockExtractor
         return $blocks;
     }
 
-    private static function block(Element $element): ?Block
+    /**
+     * @param array<string, string> $above
+     */
+    private static function block(Element $element, array $above): ?Block
     {
         $tag = $element->localName;
         // item, citação e legenda com <p> dentro: os <p> viram os blocos, sem repetir o texto
-        if ((in_array($tag, ['li', 'blockquote', 'figcaption'], true) && $element->querySelector('p') !== null) || $element->closest('a') !== null) {
+        if ((in_array($tag, ['li', 'blockquote', 'figcaption'], true) && $element->querySelector('p') !== null) || isset($above['a'])) {
             return null;
         }
 
         $type = match ($tag) {
-            'p' => self::paragraphType($element),
+            'p' => match (true) {
+                isset($above['li']) => BlockType::ListItem,
+                isset($above['blockquote']) => BlockType::Quote,
+                isset($above['figcaption']) => BlockType::Caption,
+                default => BlockType::Paragraph,
+            },
             'li' => BlockType::ListItem,
             'blockquote' => BlockType::Quote,
             'figcaption' => BlockType::Caption,
@@ -103,16 +138,6 @@ final class BlockExtractor
         }
 
         return new Block($type, $text);
-    }
-
-    private static function paragraphType(Element $paragraph): BlockType
-    {
-        return match (true) {
-            $paragraph->closest('li') !== null => BlockType::ListItem,
-            $paragraph->closest('blockquote') !== null => BlockType::Quote,
-            $paragraph->closest('figcaption') !== null => BlockType::Caption,
-            default => BlockType::Paragraph,
-        };
     }
 
     /**

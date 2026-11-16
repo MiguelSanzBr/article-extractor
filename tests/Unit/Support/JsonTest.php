@@ -37,3 +37,9 @@ it('exige o = depois do marcador e o objeto logo após os espaços', function ()
         ->and(Json::objectAssignedTo('X{"a":1}', 'X'))->toBeNull()
         ->and(Json::objectAssignedTo('X= {"a":1}', 'X'))->toBe(['a' => 1]);
 });
+
+it('conserta string com aspas escapadas antes da quebra de linha e caractere de controle 0x1F', function () {
+    expect(Json::decode("{\"x\":\"a \\\" b\nc\"}"))->toBe(['x' => "a \" b\nc"])
+        ->and(Json::decode("{\"x\":\"a\x1Fb\"}"))->toBe(['x' => "a\x1Fb"])
+        ->and(Json::decode(null))->toBeNull();
+});

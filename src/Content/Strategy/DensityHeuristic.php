@@ -11,6 +11,7 @@ use ArticleExtractor\Content\Quality;
 use ArticleExtractor\Page;
 use ArticleExtractor\Support\Text;
 use Dom\Element;
+use Dom\Text as DomText;
 
 /**
  * Pra página sem marcação nenhuma: cada parágrafo dá ponto pro pai e metade pro avô, e o
@@ -30,12 +31,14 @@ final class DensityHeuristic implements ContentStrategy
 
     public function extract(Page $page): array
     {
-        $body = $page->document->body;
-        foreach ($body === null ? [] : $this->candidates(NoiseRules::cleanCopy($body)) as $candidate) {
-            if ($this->linkDensity($candidate) > self::MAX_LINK_DENSITY) {
+        [$elements, $text, $links] = $this->lengths(NoiseRules::cleanCopy($page->body()));
+
+        foreach ($this->candidates($elements, $text) as $id) {
+            // todo candidato tem ao menos um parágrafo de 20+ caracteres, então o texto é > 0
+            if ($links[$id] / $text[$id] > self::MAX_LINK_DENSITY) {
                 continue;
             }
-            $blocks = BlockExtractor::fromElement($candidate);
+            $blocks = BlockExtractor::fromElement($elements[$id]);
             if (Quality::accepts($blocks)) {
                 return $blocks;
             }
@@ -45,40 +48,72 @@ final class DensityHeuristic implements ContentStrategy
     }
 
     /**
-     * @return list<Element> do maior ponto pro menor
+     * Tamanho do texto e do texto em link de cada elemento, somados de baixo pra cima numa
+     * passada só (medir cada candidato descendo pela subárvore fica quadrático em
+     * aninhamento fundo).
+     *
+     * @return array{array<int, Element>, array<int, int>, array<int, int>}
      */
-    private function candidates(Element $root): array
+    private function lengths(Element $root): array
     {
-        $elements = [];
+        $order = [];
+        $text = [];
+        $links = [];
+        $stack = [$root];
+        while ($stack !== []) {
+            $element = array_pop($stack);
+            $order[spl_object_id($element)] = $element;
+            [$text[spl_object_id($element)], $links[spl_object_id($element)]] = [0, 0];
+            for ($child = $element->lastElementChild; $child !== null; $child = $child->previousElementSibling) {
+                $stack[] = $child;
+            }
+        }
+
+        // de trás pra frente: cada filho já está somado quando o pai é visitado
+        foreach (array_reverse($order, true) as $id => $element) {
+            foreach ($element->childNodes as $node) {
+                if ($node instanceof DomText) {
+                    $text[$id] += Text::length((string) Text::clean($node->data));
+                }
+            }
+            if ($element->localName === 'a') {
+                $links[$id] = $text[$id];
+            }
+            // o clone está solto: só a raiz não tem pai
+            $parent = $element->parentElement;
+            if ($parent !== null) {
+                $text[spl_object_id($parent)] += $text[$id];
+                $links[spl_object_id($parent)] += $links[$id];
+            }
+        }
+
+        return [$order, $text, $links];
+    }
+
+    /**
+     * Cada parágrafo dá ponto ao pai e metade ao avô.
+     *
+     * @param array<int, Element> $elements
+     * @param array<int, int> $text
+     *
+     * @return list<int> ids, do maior ponto pro menor
+     */
+    private function candidates(array $elements, array $text): array
+    {
         $scores = [];
-        foreach ($root->querySelectorAll('p') as $paragraph) {
-            $length = Text::length((string) Text::clean($paragraph->textContent));
-            $parent = $paragraph->parentElement;
-            if ($length < self::MIN_PARAGRAPH || $parent === null) {
+        foreach ($elements as $id => $element) {
+            $parent = $element->parentElement;
+            if ($element->localName !== 'p' || $text[$id] < self::MIN_PARAGRAPH || $parent === null) {
                 continue;
             }
-            foreach ([[$parent, $length], [$parent->parentElement, $length / 2]] as [$element, $points]) {
-                if ($element !== null) {
-                    $id = spl_object_id($element);
-                    $elements[$id] = $element;
-                    $scores[$id] = ($scores[$id] ?? 0) + $points;
-                }
+            $scores[spl_object_id($parent)] = ($scores[spl_object_id($parent)] ?? 0) + $text[$id];
+            $grandparent = $parent->parentElement;
+            if ($grandparent !== null) {
+                $scores[spl_object_id($grandparent)] = ($scores[spl_object_id($grandparent)] ?? 0) + $text[$id] / 2;
             }
         }
         arsort($scores);
 
-        return array_map(static fn(int $id): Element => $elements[$id], array_keys($scores));
-    }
-
-    private function linkDensity(Element $element): float
-    {
-        $text = Text::length((string) Text::clean($element->textContent));
-        $linked = 0;
-        foreach ($element->querySelectorAll('a') as $link) {
-            $linked += Text::length((string) Text::clean($link->textContent));
-        }
-
-        // todo candidato tem ao menos um parágrafo de 20+ caracteres, então $text > 0
-        return $linked / $text;
+        return array_keys($scores);
     }
 }

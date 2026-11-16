@@ -88,3 +88,26 @@ it('parágrafo curto não dá ponto ao container', function () {
 it('parágrafo vazio não quebra a pontuação', function () {
     expect((new DensityHeuristic())->extract(page('', '<div><p></p><p>   </p>' . paragraphs(4) . '</div>')))->toHaveCount(4);
 });
+
+it('ordena os candidatos pelo ponto, não pela posição', function () {
+    $single = '<div class="b"><p>' . str_repeat('Um parágrafo só, longo. ', 13) . '</p></div>';
+
+    expect((new DensityHeuristic())->extract(page('', '<div class="a">' . paragraphs(6) . "</div>{$single}")))->toHaveCount(6);
+});
+
+it('soma no avô cada parágrafo embrulhado, metade do tamanho', function () {
+    $wrapped = '';
+    for ($i = 1; $i <= 8; $i++) {
+        $wrapped .= '<div class="w"><p>' . str_pad("Trecho {$i}", 100, ' do corpo') . '</p></div>';
+    }
+    $other = '<div class="z">' . implode('', array_map(static fn(int $i): string => '<p>' . str_pad("Outro {$i}", 80, ' texto') . '</p>', range(1, 4))) . '</div>';
+
+    expect((new DensityHeuristic())->extract(page('', "<div class=\"corpo\">{$wrapped}</div>{$other}"))[0]->text ?? '')->toStartWith('Trecho 1');
+});
+
+it('link aninhado dentro de negrito também conta como link', function () {
+    $related = implode('', array_map(static fn(int $i): string => '<p>' . str_repeat('t', 29) . $i . '<strong><a href="/x">' . str_repeat('l', 200) . '</a></strong></p>', range(1, 4)));
+
+    expect((new DensityHeuristic())->extract(page('', "<div class=\"col\">{$related}</div><div class=\"txt\">" . paragraphs(4) . '</div>'))[0]->text ?? '')
+        ->toStartWith('Parágrafo 1');
+});

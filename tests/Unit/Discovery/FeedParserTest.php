@@ -130,3 +130,9 @@ it('aceita BOM colado na declaração XML ou seguido de espaço', function (stri
 
     expect(FeedParser::parse($xml, 'https://a.example/feed')->items)->toHaveCount(1);
 })->with(['', "\n  "]);
+
+it('fica com o primeiro link com texto do item RSS', function () {
+    $xml = '<rss><channel><item><link>https://a.example/um</link><link>https://a.example/dois</link></item></channel></rss>';
+
+    expect(FeedParser::parse($xml, 'https://a.example/feed')->items[0]->url)->toBe('https://a.example/um');
+});

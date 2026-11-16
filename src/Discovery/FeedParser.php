@@ -55,8 +55,15 @@ final class FeedParser
     private static function root(string $xml): Element
     {
         try {
-            $root = XMLDocument::createFromString($xml, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)->documentElement;
-        } catch (DOMException|ValueError $error) {
+            $root = self::document($xml);
+        } catch (DOMException) {
+            // feed real costuma ter & solto, &nbsp; e byte inválido: conserta e tenta de novo
+            try {
+                $root = self::document(self::repair($xml));
+            } catch (DOMException|ValueError $error) {
+                throw new FeedParseException('não é XML bem formado', previous: $error);
+            }
+        } catch (ValueError $error) {
             throw new FeedParseException('não é XML bem formado', previous: $error);
         }
         if ($root === null || !in_array($root->localName, self::ROOTS, true)) {
@@ -66,11 +73,34 @@ final class FeedParser
         return $root;
     }
 
+    private static function document(string $xml): ?Element
+    {
+        return XMLDocument::createFromString($xml, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)->documentElement;
+    }
+
+    private static function repair(string $xml): string
+    {
+        if (preg_match('/^<\?xml[^>]*encoding=["\'](?!utf-?8)/i', $xml) !== 1) {
+            $xml = mb_scrub($xml, 'UTF-8');
+        }
+        $xml = (string) preg_replace_callback('/&([a-zA-Z][a-zA-Z0-9]*);/', static function (array $entity): string {
+            $char = html_entity_decode($entity[0], ENT_HTML5 | ENT_QUOTES, 'UTF-8');
+
+            return $char === $entity[0] ? '&amp;' . $entity[1] . ';' : '&#' . mb_ord($char) . ';';
+        }, $xml);
+
+        return (string) preg_replace('/&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#\d+|#x[0-9a-fA-F]+);)/', '&amp;', $xml);
+    }
+
     private static function rssItem(Element $item, string $feedUrl, DateTimeZone $assume): ?FeedItem
     {
+        $link = null;
+        // <atom:link rel="self"/> também tem nome local "link", mas não tem texto
+        foreach (self::children($item, 'link') as $candidate) {
+            $link ??= self::text($candidate);
+        }
         $guid = self::child($item, 'guid');
-        $link = self::text(self::child($item, 'link'))
-            ?? ($guid?->getAttribute('isPermaLink') === 'false' ? null : self::text($guid));
+        $link ??= $guid?->getAttribute('isPermaLink') === 'false' ? null : self::text($guid);
 
         return self::item($link, self::child($item, 'title'), self::child($item, 'pubDate', 'date'), $feedUrl, $assume);
     }

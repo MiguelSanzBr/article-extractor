@@ -11,9 +11,37 @@ final class Json
      */
     public static function decode(?string $json): ?array
     {
-        $value = json_decode($json ?? '', true);
+        if ($json === null) {
+            return null;
+        }
+        $value = json_decode($json, true);
+        // HTML de verdade traz JSON quebrado: quebra de linha crua dentro de string, CDATA, comentário
+        $value = is_array($value) ? $value : json_decode(self::repair($json), true);
 
         return is_array($value) ? $value : null;
+    }
+
+    private static function repair(string $json): string
+    {
+        $json = (string) preg_replace('~^\s*(?:<!--|/\*\s*<!\[CDATA\[\s*\*/|<!\[CDATA\[)|(?:-->|/\*\s*\]\]>\s*\*/|\]\]>)\s*$~', '', $json);
+
+        $repaired = '';
+        $inString = false;
+        for ($i = 0, $length = strlen($json); $i < $length; $i++) {
+            $char = $json[$i];
+            if ($inString && $char === '\\') {
+                $repaired .= $char . ($json[++$i] ?? '');
+
+                continue;
+            }
+            if ($char === '"') {
+                $inString = !$inString;
+            }
+            // caractere de controle cru só é inválido dentro de string: lá vira \u00XX
+            $repaired .= $inString && ord($char) < 0x20 ? sprintf('\\u%04x', ord($char)) : $char;
+        }
+
+        return $repaired;
     }
 
     /**
@@ -24,13 +52,10 @@ final class Json
      */
     public static function objectAssignedTo(string $source, string $marker): ?array
     {
-        $at = strpos($source, $marker);
-        $equals = $at === false ? false : strpos($source, '=', $at + strlen($marker));
-        if ($equals === false) {
+        if (preg_match('/' . preg_quote($marker, '/') . '\s*=\s*/', $source, $match, PREG_OFFSET_CAPTURE) !== 1) {
             return null;
         }
-
-        $start = $equals + 1 + strspn($source, " \t\r\n", $equals + 1);
+        $start = $match[0][1] + strlen($match[0][0]);
         if (($source[$start] ?? '') !== '{') {
             return null;
         }

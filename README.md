@@ -21,7 +21,9 @@ Biblioteca PHP 8.4 q recebe o HTML de uma página de notícia e devolve a matér
 - **HTML de saída seguro.** `html()` é remontado a partir dos blocos com todo texto escapado, venha o corpo do DOM, do JSON-LD ou do estado de app.
 - **Datas em UTC.** Data sem fuso é lida no fuso q você informar; "ontem" e 31/02 viram `null`, nunca uma data errada.
 - **Namespace de feed não importa.** Atom com `xmlns:media`, sitemap do Yoast e sitemap de notícias do Google funcionam; itens saem do mais novo pro mais velho, com URL absoluta.
-- **Rápida em página grande.** As seis camadas passam por uma página de 3 MB em menos de 2 s (teste no CI).
+- **JSON quebrado e feed sujo ainda são lidos.** JSON-LD com quebra de linha crua dentro de string, embrulhado em CDATA ou comentário, e feed com `&` solto, `&nbsp;` ou byte inválido são consertados e lidos; um campo estranho não derruba a página inteira.
+- **Só sai URL http(s).** Imagem, canonical e itens de feed com `file:`, `data:`, `javascript:` ou outro esquema viram `null`.
+- **Linear, inclusive em página malformada.** 3 MB, 40 mil parágrafos soltos ou 8 mil níveis de `<div>` sem fechar passam em menos de 2 s cada (testes no CI): nenhuma etapa desce pela página uma vez por nó.
 
 ## Instalação
 
@@ -93,7 +95,7 @@ use ArticleExtractor\Discovery\{ArticleUrlFilter, FeedLinkFinder, FeedLocations,
 $feeds = FeedLinkFinder::find($homeHtml, $homeUrl);            // feeds anunciados na home, sem o de comentários
 $feeds = $feeds ?: FeedLocations::candidates($homeUrl);        // senão, caminhos comuns de feed e sitemap
 $doc = FeedParser::parse($xml, $feedUrl);                      // itens do mais novo pro mais velho; num índice, $doc->sitemaps
-$rules = RobotsTxt::parse($robotsTxt, 'meu-robo/1.0');         // RFC 9309: isAllowed(), crawlDelay, sitemaps
+$rules = RobotsTxt::parse($robotsTxt, 'meu-robo/1.0');         // RFC 9309: grupo do nome exato do produto, isAllowed(), crawlDelay, sitemaps
 ArticleUrlFilter::accepts($url);                               // descarta tag, autor, paginação, busca e arquivo
 ```
 

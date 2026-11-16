@@ -7,8 +7,8 @@ namespace ArticleExtractor\Discovery;
 final class RobotsTxt
 {
     /**
-     * Regras pro robô cujo User-Agent é $userAgent: vale o grupo com o nome de produto mais
-     * específico que casa (sem caixa), senão o grupo *.
+     * Regras pro robô cujo User-Agent é $userAgent: valem os grupos com o nome do produto
+     * (sem caixa, sem versão), senão os grupos *.
      */
     public static function parse(string $body, string $userAgent): RobotsRules
     {
@@ -19,6 +19,7 @@ final class RobotsTxt
         $sitemaps = [];
         $lastWasAgent = false;
 
+        $body = str_starts_with($body, "\u{FEFF}") ? substr($body, 3) : $body;
         foreach (preg_split('/\R/', $body) ?: [] as $line) {
             $line = (string) preg_replace('/#.*/', '', $line);
             if (!str_contains($line, ':')) {
@@ -32,7 +33,7 @@ final class RobotsTxt
             if ($key === 'sitemap' && filter_var($value, FILTER_VALIDATE_URL) !== false) {
                 $sitemaps[] = $value;
             } elseif ($key === 'user-agent') {
-                $agents[$group][] = strtolower($value);
+                $agents[$group][] = strtolower(explode('/', $value)[0]);
             } elseif ($group !== null && ($key === 'allow' || $key === 'disallow')) {
                 $rules[$group][] = [$key === 'allow', $value];
             } elseif ($group !== null && $key === 'crawl-delay' && is_numeric($value)) {
@@ -44,15 +45,15 @@ final class RobotsTxt
         $chosen = self::groupsFor($product, $agents);
 
         return new RobotsRules(
-            array_merge(...array_map(static fn(int $group): array => $rules[$group] ?? [], $chosen)),
-            array_values(array_filter(array_map(static fn(int $group): ?float => $delays[$group] ?? null, $chosen)))[0] ?? null,
+            array_merge(...array_map(static fn(int|string $group): array => $rules[$group] ?? [], $chosen)),
+            self::firstDelay($chosen, $delays),
             $sitemaps,
         );
     }
 
     /**
-     * Grupos do nome de produto mais específico que casa; sem nenhum, os grupos *. Vários
-     * grupos com o mesmo nome valem juntos.
+     * Grupos com exatamente o nome do produto (sem caixa e sem versão); sem nenhum, os
+     * grupos *. Vários grupos com o mesmo nome valem juntos (RFC 9309, 2.2.1).
      *
      * @param array<array-key, list<string>> $agents
      *
@@ -60,22 +61,31 @@ final class RobotsTxt
      */
     private static function groupsFor(string $product, array $agents): array
     {
-        $chosen = [];
-        $bestLength = null;
+        $exact = [];
+        $wildcard = [];
         foreach ($agents as $group => $names) {
-            foreach ($names as $agent) {
-                if ($agent !== '*' && !str_starts_with($product, $agent)) {
-                    continue;
-                }
-                $length = $agent === '*' ? 0 : strlen($agent);
-                if ($bestLength === null || $length > $bestLength) {
-                    [$chosen, $bestLength] = [[$group], $length];
-                } elseif ($length === $bestLength) {
-                    $chosen[] = $group;
-                }
+            if (in_array($product, $names, true)) {
+                $exact[] = $group;
+            } elseif (in_array('*', $names, true)) {
+                $wildcard[] = $group;
             }
         }
 
-        return $chosen;
+        return $exact !== [] ? $exact : $wildcard;
+    }
+
+    /**
+     * @param list<array-key> $groups
+     * @param array<array-key, float> $delays
+     */
+    private static function firstDelay(array $groups, array $delays): ?float
+    {
+        foreach ($groups as $group) {
+            if (isset($delays[$group])) {
+                return $delays[$group];
+            }
+        }
+
+        return null;
     }
 }

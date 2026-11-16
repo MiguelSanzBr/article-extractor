@@ -21,7 +21,9 @@ A PHP 8.4 library that takes the HTML of a news page and returns the article: ti
 - **Safe output HTML.** `html()` is rebuilt from the blocks with every piece of text escaped, whether the body came from the DOM, JSON-LD or app state.
 - **Dates in UTC.** A date without a timezone is read in the timezone you pass; "yesterday" and 31/02 become `null`, never a wrong date.
 - **Feed namespaces don't matter.** Atom with `xmlns:media`, Yoast sitemaps and Google News sitemaps all work; items come newest first, with absolute URLs.
-- **Fast on large pages.** The six layers get through a 3 MB page in under 2 s (tested in CI).
+- **Broken JSON and dirty feeds still get read.** JSON-LD with raw newlines inside strings, wrapped in CDATA or comments, and feeds with a bare `&`, `&nbsp;` or invalid bytes are repaired and read; one odd field doesn't take the whole page down.
+- **Only http(s) URLs come out.** Images, canonicals and feed items with `file:`, `data:`, `javascript:` or any other scheme become `null`.
+- **Linear, even on malformed pages.** 3 MB, 40k loose paragraphs or 8k levels of unclosed `<div>` each go through in under 2 s (tested in CI): no step walks the page once per node.
 
 ## Install
 
@@ -77,7 +79,7 @@ use ArticleExtractor\Discovery\{ArticleUrlFilter, FeedLinkFinder, FeedLocations,
 $feeds = FeedLinkFinder::find($homeHtml, $homeUrl);            // feeds the home page announces, minus comment feeds
 $feeds = $feeds ?: FeedLocations::candidates($homeUrl);        // otherwise, common feed and sitemap paths
 $doc = FeedParser::parse($xml, $feedUrl);                      // items newest first; for an index, $doc->sitemaps
-$rules = RobotsTxt::parse($robotsTxt, 'my-bot/1.0');           // RFC 9309: isAllowed(), crawlDelay, sitemaps
+$rules = RobotsTxt::parse($robotsTxt, 'my-bot/1.0');           // RFC 9309: exact product-name group, isAllowed(), crawlDelay, sitemaps
 ArticleUrlFilter::accepts($url);                               // drops tag, author, pagination, search and file URLs
 ```
 

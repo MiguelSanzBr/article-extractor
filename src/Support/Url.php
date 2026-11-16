@@ -11,17 +11,18 @@ final class Url
     private const array TRACKING = ['fbclid', 'gclid', 'mc_cid', 'mc_eid'];
 
     /**
-     * Resolve uma referência contra a base (RFC 3986, seção 5.2). Referência vazia,
-     * data:, javascript: e mailto: não são endereço de recurso: viram null.
+     * Resolve uma referência contra a base (RFC 3986, seção 5.2). Só devolve http(s):
+     * referência vazia ou com outro esquema (data:, file:, javascript:…) vira null.
      */
     public static function resolve(string $base, string $reference): ?string
     {
         $reference = trim($reference);
-        if ($reference === '' || preg_match('/^(data|javascript|mailto):/i', $reference) === 1) {
+        if ($reference === '') {
             return null;
         }
-        if (preg_match('/^[a-z][a-z0-9+.-]*:/i', $reference) === 1) {
-            return $reference;
+        // referência com esquema: só http(s) sai daqui (nada de file:, data:, javascript:…)
+        if (preg_match('/^([a-z][a-z0-9+.-]*):/i', $reference, $scheme) === 1) {
+            return in_array(strtolower($scheme[1]), ['http', 'https'], true) ? $reference : null;
         }
 
         $parts = parse_url($base);

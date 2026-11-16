@@ -22,17 +22,17 @@ function timed(callable $run): float
 }
 
 it('página plana com 40 mil parágrafos sai em menos de 2 s', function () {
-    $body = implode('', array_map(static fn (int $i): string => "<p>Parágrafo número {$i} do texto.</p>", range(1, 40_000)));
+    $body = implode('', array_map(static fn(int $i): string => "<p>Parágrafo número {$i} do texto.</p>", range(1, 40_000)));
 
-    expect(timed(fn () => Extractor::create()->extract("<html><body>{$body}</body></html>", 'https://a.test/x')))->toBeLessThan(2.0);
+    expect(timed(fn() => Extractor::create()->extract("<html><body>{$body}</body></html>", 'https://a.test/x')))->toBeLessThan(2.0);
 })->group('slow');
 
 it('linha fina de 10 mil caracteres não trava a comparação com o corpo', function () {
     $description = str_repeat('Texto longo da linha fina repetido muitas vezes. ', 205);
-    $body = implode('', array_map(static fn (int $i): string => '<p>' . str_repeat("Parágrafo {$i} longo do corpo. ", 330) . '</p>', range(1, 5)));
+    $body = implode('', array_map(static fn(int $i): string => '<p>' . str_repeat("Parágrafo {$i} longo do corpo. ", 330) . '</p>', range(1, 5)));
     $html = "<html><head><meta property=\"og:description\" content=\"{$description}\"></head><body><div class=\"entry-content\">{$body}</div></body></html>";
 
-    expect(timed(fn () => Extractor::create()->extract($html, 'https://a.test/x')))->toBeLessThan(2.0);
+    expect(timed(fn() => Extractor::create()->extract($html, 'https://a.test/x')))->toBeLessThan(2.0);
 })->group('slow');
 
 it('corpo de um parágrafo longo igual à descrição continua sendo corpo', function () {
@@ -44,9 +44,9 @@ it('corpo de um parágrafo longo igual à descrição continua sendo corpo', fun
 
 it('aninhamento profundo sem fechamento sai em menos de 2 s', function (bool $withLinks) {
     $link = $withLinks ? ' <a href="/x">um link</a>' : '';
-    $chain = implode('', array_map(static fn (int $i): string => "<div><p>Trecho {$i} da matéria com texto suficiente{$link}.</p>", range(1, 8000)));
+    $chain = implode('', array_map(static fn(int $i): string => "<div><p>Trecho {$i} da matéria com texto suficiente{$link}.</p>", range(1, 8000)));
 
-    expect(timed(fn () => Extractor::create()->extract("<html><body>{$chain}</body></html>", 'https://a.test/x')))->toBeLessThan(2.0);
+    expect(timed(fn() => Extractor::create()->extract("<html><body>{$chain}</body></html>", 'https://a.test/x')))->toBeLessThan(2.0);
 })->with([false, true])->group('slow');
 
 it('sequência longa de chamadas não deixa o pós-processamento quadrático', function () {
@@ -56,7 +56,7 @@ it('sequência longa de chamadas não deixa o pós-processamento quadrático', f
         $blocks[] = new Block(BlockType::Paragraph, "Teaser curto {$i}.");
     }
 
-    expect(timed(fn () => PostProcessor::process($blocks, Metadata::empty())))->toBeLessThan(2.0);
+    expect(timed(fn() => PostProcessor::process($blocks, Metadata::empty())))->toBeLessThan(2.0);
 })->group('slow');
 
 it('lê JSON-LD com quebra de linha crua dentro de string', function () {
@@ -112,3 +112,15 @@ it('Fusion.globalContentConfig não é confundido com Fusion.globalContent', fun
 it('só aceita URL http(s) como resultado', function (string $reference) {
     expect(Url::resolve('https://a.com/x', $reference))->toBeNull();
 })->with(['file:///etc/passwd', 'vbscript:msgbox(1)', 'ftp://a.com/f.jpg']);
+
+it('conserta só o necessário: entidades XML ficam, entidade desconhecida vira texto, latin1 declarado não é tocado', function () {
+    $xml = '<rss><channel><item><title>A &amp; B&nbsp;C &naoexiste; D & E</title><link>https://a.example/n</link></item></channel></rss>';
+    $latin1 = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><rss><channel><item><title>A\xE7\xE3o & cia</title><link>https://a.example/n</link></item></channel></rss>";
+
+    expect(FeedParser::parse($xml, 'https://a.example/feed')->items[0]->title)->toBe('A & B C &naoexiste; D & E')
+        ->and(FeedParser::parse($latin1, 'https://a.example/feed')->items[0]->title)->toBe('Ação & cia');
+});
+
+it('conserta JSON-LD com aspas escapadas e quebra de linha na mesma string', function () {
+    expect(Json::decode("{\"a\":\"diz \\\"oi\\\"\nfim\"}"))->toBe(['a' => "diz \"oi\"\nfim"]);
+});

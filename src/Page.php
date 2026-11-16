@@ -6,7 +6,9 @@ namespace ArticleExtractor;
 
 use ArticleExtractor\Support\Json;
 use ArticleExtractor\Support\Url;
+use Dom\Element;
 use Dom\HTMLDocument;
+use LogicException;
 
 /**
  * Uma página já parseada. O documento não é alterado depois do parse: quem precisa limpar
@@ -26,6 +28,14 @@ final readonly class Page
         public string $baseUrl,
         public EmbeddedData $embedded,
     ) {}
+
+    /**
+     * O parser HTML5 sempre cria <body>, mesmo pra string vazia.
+     */
+    public function body(): Element
+    {
+        return $this->document->body ?? throw new LogicException('documento HTML sem <body>');
+    }
 
     public static function parse(string $html, string $url, ?string $encoding = null): self
     {
@@ -55,7 +65,7 @@ final readonly class Page
                 continue;
             }
             $candidates = match (true) {
-                is_array($data['@graph'] ?? null) => $data['@graph'],
+                is_array($data['@graph'] ?? null) => array_is_list($data['@graph']) ? $data['@graph'] : [$data['@graph']],
                 array_is_list($data) => $data,
                 default => [$data],
             };
