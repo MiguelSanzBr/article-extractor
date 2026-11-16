@@ -9,13 +9,8 @@ function pageWithHead(string $head, string $body = '<p>corpo</p>', string $url =
     return Page::parse("<!doctype html><html><head>{$head}</head><body>{$body}</body></html>", $url);
 }
 
-function ldJson(array $data): string
-{
-    return '<script type="application/ld+json">' . json_encode($data) . '</script>';
-}
-
 it('acha o artigo dentro de @graph', function () {
-    $page = pageWithHead(ldJson(['@context' => 'https://schema.org', '@graph' => [
+    $page = pageWithHead(ld(['@context' => 'https://schema.org', '@graph' => [
         ['@type' => 'Organization', 'name' => 'Jornal'],
         ['@type' => 'NewsArticle', 'headline' => 'Manchete'],
     ]]));
@@ -25,32 +20,32 @@ it('acha o artigo dentro de @graph', function () {
 });
 
 it('reconhece @type em lista e sem diferenciar caixa', function (mixed $type) {
-    $page = pageWithHead(ldJson(['@type' => $type, 'headline' => 'X']));
+    $page = pageWithHead(ld(['@type' => $type, 'headline' => 'X']));
 
     expect($page->embedded->article)->not->toBeNull();
 })->with([[['Article', 'Thing']], ['newsarticle'], ['LiveBlogPosting'], ['ReportageNewsArticle']]);
 
 it('não trata organização como artigo', function () {
-    $page = pageWithHead(ldJson(['@type' => 'Organization', 'name' => 'Jornal']));
+    $page = pageWithHead(ld(['@type' => 'Organization', 'name' => 'Jornal']));
 
     expect($page->embedded->article)->toBeNull()
         ->and($page->embedded->jsonLd)->toHaveCount(1);
 });
 
 it('não aceita tipo que só contém a palavra Article', function () {
-    $page = pageWithHead(ldJson(['@type' => 'ArticleCollection', 'headline' => 'X']));
+    $page = pageWithHead(ld(['@type' => 'ArticleCollection', 'headline' => 'X']));
 
     expect($page->embedded->article)->toBeNull();
 });
 
 it('ignora JSON-LD inválido e lê o seguinte', function () {
-    $page = pageWithHead('<script type="application/ld+json">{quebrado</script>' . ldJson(['@type' => 'BlogPosting', 'headline' => 'Ok']));
+    $page = pageWithHead('<script type="application/ld+json">{quebrado</script>' . ld(['@type' => 'BlogPosting', 'headline' => 'Ok']));
 
     expect($page->embedded->article['headline'] ?? null)->toBe('Ok');
 });
 
 it('achata lista de topo e ignora item que não é objeto', function () {
-    $page = pageWithHead(ldJson([['@type' => 'WebPage'], 'texto', ['@type' => 'Article', 'headline' => 'Y']]));
+    $page = pageWithHead(ld([['@type' => 'WebPage'], 'texto', ['@type' => 'Article', 'headline' => 'Y']]));
 
     expect($page->embedded->jsonLd)->toHaveCount(2)
         ->and($page->embedded->article['headline'] ?? null)->toBe('Y');
@@ -90,7 +85,7 @@ it('faz parse de HTML vazio sem lançar', function () {
 });
 
 it('não remove os scripts do documento ao ler os payloads', function () {
-    $page = pageWithHead(ldJson(['@type' => 'Article', 'headline' => 'Z']));
+    $page = pageWithHead(ld(['@type' => 'Article', 'headline' => 'Z']));
 
     expect($page->document->querySelector('script[type="application/ld+json"]'))->not->toBeNull();
 });

@@ -13,3 +13,9 @@ arch('sem debug esquecido')
 arch('strict types em tudo')
     ->expect('ArticleExtractor')
     ->toUseStrictTypes();
+
+arch('fontes de metadado implementam a interface')
+    ->expect('ArticleExtractor\MetadataSources')
+    ->classes()
+    ->toImplement(ArticleExtractor\MetadataSources\MetadataSource::class)
+    ->ignoring([ArticleExtractor\MetadataSources\MetadataExtractor::class, ArticleExtractor\MetadataSources\Fields::class]);

@@ -3,7 +3,16 @@
     "description": "Extrai a matéria de qualquer página de notícia (metadados + corpo) sem seletor por site, e lê feeds RSS/Atom/sitemap. PHP 8.4 puro.",
     "type": "library",
     "license": "MIT",
-    "keywords": ["article", "extractor", "news", "readability", "rss", "sitemap", "scraping", "json-ld"],
+    "keywords": [
+        "article",
+        "extractor",
+        "news",
+        "readability",
+        "rss",
+        "sitemap",
+        "scraping",
+        "json-ld"
+    ],
     "authors": [
         {
             "name": "Miguel Sanz",
@@ -24,9 +33,14 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"
-        }
+        },
+        "files": [
+            "tests/Helpers.php"
+        ]
     },
-    "bin": ["bin/article-extract"],
+    "bin": [
+        "bin/article-extract"
+    ],
     "scripts": {
         "test": "pest",
         "lint": "pint",
