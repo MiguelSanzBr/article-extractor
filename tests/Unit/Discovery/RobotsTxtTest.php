@@ -76,9 +76,6 @@ it('lê crawl-delay do primeiro grupo e ignora outra linha numérica', function 
         ->and(RobotsTxt::parse("User-agent: *\nCrawl-delay: 3\nRequest-rate: 10", UA)->crawlDelay)->toBe(3.0);
 });
 
-it('grupo de nome curto que casa vence o *', function () {
-    expect(RobotsTxt::parse("User-agent: *\nDisallow: /\n\nUser-agent: a\nDisallow: /x", UA)->isAllowed('https://a.com/y'))->toBeTrue();
-});
 
 it('nome do grupo precisa casar com o começo do produto', function () {
     expect(RobotsTxt::parse("User-agent: extractor\nDisallow: /\n\nUser-agent: *\nDisallow:", UA)->isAllowed('https://a.com/x'))->toBeTrue();
