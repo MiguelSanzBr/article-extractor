@@ -1,0 +1,5 @@
+parameters:
+    level: max
+    # tests ficam de fora como no multitenant-invoicing: a API fluente do Pest não é tipada pro nível max
+    paths:
+        - src/

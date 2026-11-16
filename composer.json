@@ -1,0 +1,51 @@
+{
+    "name": "miguelsanzbr/article-extractor",
+    "description": "Extrai a matéria de qualquer página de notícia (metadados + corpo) sem seletor por site, e lê feeds RSS/Atom/sitemap. PHP 8.4 puro.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": ["article", "extractor", "news", "readability", "rss", "sitemap", "scraping", "json-ld"],
+    "authors": [
+        {
+            "name": "Miguel Sanz",
+            "email": "miguelsanzb.p@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "ext-dom": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "ArticleExtractor\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "bin": ["bin/article-extract"],
+    "scripts": {
+        "test": "pest",
+        "lint": "pint",
+        "lint:check": "pint --test",
+        "types": "phpstan analyse --no-progress --memory-limit=1G",
+        "coverage": "pest --coverage --min=100",
+        "mutate": "pest --mutate --covered-only --parallel --min=97"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require-dev": {
+        "laravel/pint": "^1",
+        "pestphp/pest": "^4",
+        "phpstan/phpstan": "^2"
+    }
+}

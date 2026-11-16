@@ -1,0 +1,12 @@
+name: article-extractor
+
+services:
+  php:
+    build:
+      context: docker
+      # mesmo dono dos arquivos do bind mount, senão o container não escreve em vendor/
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: article-extractor-php
+    volumes: [".:/app"]
