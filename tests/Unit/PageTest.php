@@ -100,3 +100,9 @@ it('respeita a codificação informada', function () {
 
     expect($page->document->querySelector('p')?->textContent)->toBe('ação');
 });
+
+it('pula o Fusion.globalContent vazio e usa o próximo script', function () {
+    $page = pageWithHead('<script>Fusion.globalContent = null;</script><script>Fusion.globalContent = {"_id":"abc"};</script>');
+
+    expect($page->embedded->fusion)->toBe(['_id' => 'abc']);
+});
