@@ -40,7 +40,7 @@ it('reconstrói HTML seguro, agrupando itens de lista', function () {
 });
 
 it('conta palavras com acento, hífen e número', function () {
-    expect(article([new Block(BlockType::Paragraph, "Olá, mundo! Guarda-chuva d'água em 2026.")])->wordCount())->toBe(5)
+    expect(article([new Block(BlockType::Paragraph, "Olá, mundo! Guarda-chuva d'água em 2026.")])->wordCount())->toBe(6)
         ->and(article([])->wordCount())->toBe(0);
 });
 

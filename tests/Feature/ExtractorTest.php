@@ -13,7 +13,7 @@ function htmlFixture(string $name): string
 /** @return list<Block> */
 function bodyBlocks(ArticleExtractor\Article $article): array
 {
-    return array_values(array_filter($article->blocks, static fn (Block $b): bool => $b->type->isBody()));
+    return array_values(array_filter($article->blocks, static fn(Block $b): bool => $b->type->isBody()));
 }
 
 it('extrai a matéria de cada tipo de página', function (string $fixture, string $strategy, string $title, int $bodyCount, string $first, string $last) {
@@ -65,14 +65,14 @@ it('página de paywall com teaser não tem corpo, mas tem título', function () 
 it('lê página em latin1 pelo meta charset ou pela codificação informada', function (bool $withMeta, ?string $encoding) {
     $meta = $withMeta ? '<meta charset="iso-8859-1">' : '';
     $utf8 = "<!doctype html><html><head>{$meta}<meta property=\"og:title\" content=\"Ação na Justiça\"></head><body><article>"
-        . str_repeat('<p>A ação foi protocolada na última sexta-feira e ainda não tem data para julgamento no tribunal.</p>', 4)
+        . implode('', array_map(static fn(int $i): string => "<p>A ação {$i} foi protocolada na última sexta-feira e ainda não tem data para julgamento no tribunal.</p>", range(1, 4)))
         . '</article></body></html>';
     $latin1 = mb_convert_encoding($utf8, 'ISO-8859-1', 'UTF-8');
 
     $article = Extractor::create()->extract($latin1, 'https://exemplo.test/x', $encoding);
 
     expect($article->metadata->title)->toBe('Ação na Justiça')
-        ->and($article->text())->toContain('A ação foi protocolada');
+        ->and($article->text())->toContain('A ação 1 foi protocolada');
 })->with([
     'com meta charset' => [true, null],
     'sem meta, codificação informada' => [false, 'windows-1252'],
