@@ -39,3 +39,10 @@ it('não infla a semelhança de texto acentuado medindo bytes', function () {
     // 'ãããã' e 'aaaa' não têm caractere em comum
     expect(Text::similarity('ãããã', 'aaaa'))->toBe(0.0);
 });
+
+it('mede semelhança mesmo com mais de 256 caracteres distintos', function () {
+    $chars = implode('', array_map(mb_chr(...), range(0x4E00, 0x4E00 + 299)));
+
+    expect(Text::similarity($chars, $chars))->toBe(1.0)
+        ->and(Text::similarity($chars, mb_substr($chars, 0, 150)))->toBe(0.5);
+});

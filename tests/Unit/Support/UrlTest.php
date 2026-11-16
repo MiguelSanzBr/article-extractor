@@ -50,7 +50,7 @@ it('mantém a raiz com barra e porta não padrão', function () {
 });
 
 it('recusa URL que não é http(s) com host', function (string $url) {
-    expect(fn () => Url::normalize($url))->toThrow(InvalidArgumentException::class);
+    expect(fn() => Url::normalize($url))->toThrow(InvalidArgumentException::class);
 })->with(['ftp://a.com/x', 'https:///x', 'nada']);
 
 it('extrai o host em minúsculas', function () {
