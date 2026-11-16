@@ -9,7 +9,6 @@ use ArticleExtractor\BlockType;
 use ArticleExtractor\Support\Text;
 use Dom\Element;
 use Dom\HTMLDocument;
-use LogicException;
 
 /**
  * Transforma um container em blocos de texto. Trabalha sempre num clone: o documento de
@@ -32,13 +31,7 @@ final class BlockExtractor
      */
     public static function fromElement(Element $container): array
     {
-        $clone = self::copy($container);
-        foreach ($clone->querySelectorAll('*') as $element) {
-            if (NoiseRules::isNoise($element)) {
-                $element->remove();
-            }
-        }
-
+        $clone = NoiseRules::cleanCopy($container);
         $blocks = [];
         $seen = [];
         foreach ($clone->querySelectorAll(self::CANDIDATES) as $element) {
@@ -60,6 +53,29 @@ final class BlockExtractor
         $body = HTMLDocument::createFromString("<!doctype html><html><body>{$html}</body></html>", LIBXML_NOERROR)->body;
 
         return $body === null ? [] : self::fromElement($body);
+    }
+
+    /**
+     * Corpo que vem como texto (JSON-LD, estado de app): com tag de bloco é HTML, senão
+     * cada linha é um parágrafo.
+     *
+     * @return list<Block>
+     */
+    public static function fromText(string $body): array
+    {
+        if (preg_match('/<(p|h[1-6]|div|ul|ol|li|blockquote|br)\b/i', $body) === 1) {
+            return self::fromHtmlFragment($body);
+        }
+
+        $blocks = [];
+        foreach (preg_split('/\R+/u', $body) ?: [] as $line) {
+            $text = Text::clean(strip_tags($line));
+            if ($text !== null && Text::length($text) >= self::MIN_TEXT && !NoiseRules::isBoilerplate($text)) {
+                $blocks[] = new Block(BlockType::Paragraph, $text);
+            }
+        }
+
+        return $blocks;
     }
 
     private static function block(Element $element): ?Block
@@ -107,7 +123,7 @@ final class BlockExtractor
         if ($element->localName !== 'li' || $element->querySelector('ul, ol') === null) {
             return $element->textContent ?? '';
         }
-        $copy = self::copy($element);
+        $copy = NoiseRules::cleanCopy($element);
         foreach ($copy->querySelectorAll('ul, ol') as $list) {
             $list->remove();
         }
@@ -151,12 +167,5 @@ final class BlockExtractor
         }
 
         return $links;
-    }
-
-    private static function copy(Element $element): Element
-    {
-        $copy = $element->cloneNode(true);
-
-        return $copy instanceof Element ? $copy : throw new LogicException('clone de elemento deveria ser elemento');
     }
 }

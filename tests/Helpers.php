@@ -34,5 +34,5 @@ function paragraphs(int $count, string $prefix = 'Parágrafo'): string
 /** @param list<ArticleExtractor\Block> $blocks @return list<string> */
 function blockTypes(array $blocks): array
 {
-    return array_map(static fn (ArticleExtractor\Block $b): string => $b->type->value, $blocks);
+    return array_map(static fn(ArticleExtractor\Block $b): string => $b->type->value, $blocks);
 }

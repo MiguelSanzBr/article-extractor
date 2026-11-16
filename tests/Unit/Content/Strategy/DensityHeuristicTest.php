@@ -17,7 +17,7 @@ it('escolhe o container do corpo e deixa a coluna de links de fora', function ()
     $blocks = (new DensityHeuristic())->extract(page('', '<div id="wrap"><div class="col-a">' . paragraphs(4) . "</div><div class=\"col-b\">{$links}</div></div>"));
 
     expect($blocks)->toHaveCount(4)
-        ->and(implode(' ', array_map(static fn ($b) => $b->text, $blocks)))->not->toContain('Outra matéria');
+        ->and(implode(' ', array_map(static fn($b) => $b->text, $blocks)))->not->toContain('Outra matéria');
 });
 
 it('soma no avô os parágrafos que vêm cada um num wrapper', function () {
@@ -30,5 +30,5 @@ it('soma no avô os parágrafos que vêm cada um num wrapper', function () {
 });
 
 it('não devolve nada quando nenhum candidato passa no piso', function () {
-    expect((new DensityHeuristic())->extract(page('', '<div><p>Pouco texto aqui mesmo.</p></div>')))->toBe([]);
+    expect((new DensityHeuristic())->extract(page('', '<div><p>Curto.</p><p>Pouco texto aqui mesmo.</p></div>')))->toBe([]);
 });

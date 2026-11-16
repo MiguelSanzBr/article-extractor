@@ -19,7 +19,10 @@ it('teaser de um parágrafo em article não vence', function () {
 });
 
 it('lista de chamadas curtas perde para o corpo de verdade', function () {
-    $teasers = str_repeat('<p>Chamada curta para outra matéria.</p>', 10);
+    $teasers = '';
+    for ($i = 1; $i <= 10; $i++) {
+        $teasers .= "<p>Chamada curta {$i} para outra matéria.</p>";
+    }
     $blocks = (new SemanticContainers())->extract(page('', "<article>{$teasers}</article><article>" . paragraphs(4) . '</article>'));
 
     expect($blocks)->toHaveCount(4)

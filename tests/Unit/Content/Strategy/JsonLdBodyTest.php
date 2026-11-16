@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use ArticleExtractor\Content\Strategy\JsonLdBody;
 
-$body = "Primeiro parágrafo do corpo vindo do JSON-LD, com bastante texto para contar.\n\n"
-    . "Segundo parágrafo do corpo vindo do JSON-LD, também com bastante texto aqui.\n"
+$body = "Primeiro parágrafo do corpo vindo do JSON-LD, com bastante texto para contar como parte do corpo.\n\n"
+    . "Segundo parágrafo do corpo vindo do JSON-LD, também com bastante texto aqui para somar no corpo.\n"
     . "curto\n"
-    . 'Terceiro parágrafo do corpo vindo do JSON-LD, fechando a matéria com mais texto e detalhes finais.';
+    . 'Terceiro parágrafo do corpo vindo do JSON-LD, fechando a matéria com mais texto e detalhes finais sobre o assunto.';
 
 it('quebra o articleBody em parágrafos', function () use ($body) {
     $strategy = new JsonLdBody();

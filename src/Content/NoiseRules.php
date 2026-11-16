@@ -6,6 +6,7 @@ namespace ArticleExtractor\Content;
 
 use ArticleExtractor\Support\Text;
 use Dom\Element;
+use LogicException;
 
 final class NoiseRules
 {
@@ -85,5 +86,21 @@ final class NoiseRules
         return Text::length($text) <= 80
             && preg_match(self::DATE_STAMP, $text) === 1
             && preg_match_all('/(?<![\p{L}\d])\p{L}+(?![\p{L}\d])/u', $text) <= 6;
+    }
+
+    /**
+     * Clone do elemento sem os descendentes que são ruído. O original não muda.
+     */
+    public static function cleanCopy(Element $element): Element
+    {
+        $copy = $element->cloneNode(true);
+        $copy = $copy instanceof Element ? $copy : throw new LogicException('clone de elemento deveria ser elemento');
+        foreach ($copy->querySelectorAll('*') as $descendant) {
+            if (self::isNoise($descendant)) {
+                $descendant->remove();
+            }
+        }
+
+        return $copy;
     }
 }
