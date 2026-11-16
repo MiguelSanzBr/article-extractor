@@ -27,7 +27,7 @@ final class PrioritySelectors implements ContentStrategy
     public function extract(Page $page): array
     {
         $best = [];
-        $bestChars = 0;
+        $bestChars = Quality::MIN_BODY_CHARS - 1;
         foreach ($page->document->querySelectorAll(self::SELECTORS) as $container) {
             $blocks = BlockExtractor::fromElement($container);
             $chars = Quality::bodyChars($blocks);
@@ -36,6 +36,6 @@ final class PrioritySelectors implements ContentStrategy
             }
         }
 
-        return Quality::accepts($best) ? $best : [];
+        return $best;
     }
 }

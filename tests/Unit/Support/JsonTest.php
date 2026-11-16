@@ -31,3 +31,9 @@ it('devolve null quando não há objeto depois do marcador', function (string $s
     'Fusion.globalContent = {"a":1',
     'Fusion.globalContent = {a:1};',
 ]);
+
+it('exige o = depois do marcador e o objeto logo após os espaços', function () {
+    expect(Json::objectAssignedTo('ab{"x":1}', 'Fusion'))->toBeNull()
+        ->and(Json::objectAssignedTo('X{"a":1}', 'X'))->toBeNull()
+        ->and(Json::objectAssignedTo('X= {"a":1}', 'X'))->toBe(['a' => 1]);
+});

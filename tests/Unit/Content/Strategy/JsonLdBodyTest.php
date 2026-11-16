@@ -35,3 +35,22 @@ it('não devolve nada sem articleBody em texto ou abaixo do piso', function (arr
     [['@type' => 'NewsArticle', 'articleBody' => ['lista']]],
     [['@type' => 'NewsArticle', 'articleBody' => 'Corpo curto demais, só uma linha de teaser.']],
 ]);
+
+it('tira tag inline do corpo em texto e aceita linha de 20 caracteres', function () {
+    $body = "Texto com <b>negrito</b> no meio do parágrafo, longo o bastante para contar no corpo da matéria.\n"
+        . str_repeat('x', 20) . "\n" . str_repeat('y', 19) . "\n"
+        . str_repeat('Mais uma frase longa para passar do piso de trezentos caracteres. ', 4);
+    $blocks = (new JsonLdBody())->extract(page(ld(['@type' => 'NewsArticle', 'articleBody' => $body])));
+
+    expect($blocks[0]->text)->toStartWith('Texto com negrito no meio')
+        ->and($blocks[1]->text)->toBe(str_repeat('x', 20))
+        ->and($blocks)->toHaveCount(3);
+});
+
+it('prefere o articleBody do artigo e, sem artigo, o primeiro item com corpo', function () use ($body) {
+    $other = str_replace('JSON-LD', 'outro item', $body);
+    $third = str_replace('JSON-LD', 'terceiro item', $body);
+
+    expect((new JsonLdBody())->extract(page(ld(['@graph' => [['@type' => 'WebPage', 'articleBody' => $other], ['@type' => 'NewsArticle', 'articleBody' => $body]]])))[0]->text)->toContain('JSON-LD')
+        ->and((new JsonLdBody())->extract(page(ld(['@graph' => [['@type' => 'WebPage', 'articleBody' => $other], ['@type' => 'WebSite', 'articleBody' => $third]]])))[0]->text)->toContain('outro item');
+});

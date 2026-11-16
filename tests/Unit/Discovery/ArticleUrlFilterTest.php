@@ -21,3 +21,14 @@ it('separa URL de matéria de página de listagem e de arquivo', function (strin
     ['mailto:redacao@a.com', false],
     ['ftp://a.com/economia/2026/03/05/juros-sobem', false],
 ]);
+
+it('mede o caminho sem a barra final e aceita a partir de 20 caracteres', function (string $url, bool $accepted) {
+    expect(ArticleUrlFilter::accepts($url))->toBe($accepted);
+})->with([
+    ['http://a.com/economia/2026/03/05/juros-sobem-de-novo', true],
+    ['HTTPS://a.com/economia/2026/03/05/juros-sobem-de-novo', true],
+    ['https://a.com', false],
+    ['https://a.com/' . str_repeat('a', 19), true],
+    ['https://a.com/' . str_repeat('a', 18), false],
+    ['https://a.com/' . str_repeat('a', 18) . '/', false],
+]);

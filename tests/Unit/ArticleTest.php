@@ -64,3 +64,7 @@ it('exporta as chaves na ordem fixa, datas em UTC com Z', function () {
         ->and($data['word_count'])->toBe(2)
         ->and($data['blocks'])->toBe([['type' => 'paragraph', 'text' => 'Um dois']]);
 });
+
+it('fecha a lista e não acrescenta nada quando termina em parágrafo', function () {
+    expect(article([new Block(BlockType::ListItem, 'Item'), new Block(BlockType::Paragraph, 'Fim')])->html())->toBe('<ul><li>Item</li></ul><p>Fim</p>');
+});

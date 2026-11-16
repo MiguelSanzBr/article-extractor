@@ -41,3 +41,16 @@ it('recusa data impossível, texto solto e ano fora do intervalo', function (?st
 it('apara espaços em volta', function () {
     expect(Dates::parse("  2026-03-05\n", $this->utc)?->format('Y-m-d'))->toBe('2026-03-05');
 });
+
+it('aceita os limites de hora, minuto e ano', function (string $raw, ?string $expected) {
+    expect(Dates::parse($raw, $this->utc)?->format('c'))->toBe($expected);
+})->with([
+    ['05/03/2026 23:59', '2026-03-05T23:59:00+00:00'],
+    ['05/03/2026 24:00', null],
+    ['05/03/2026 10:60', null],
+    ['01/01/1990', '1990-01-01T00:00:00+00:00'],
+    ['31/12/1989', null],
+    ['31/12/2100', '2100-12-31T00:00:00+00:00'],
+    ['01/01/2101', null],
+    ['2100-12-31T23:00:00Z', '2100-12-31T23:00:00+00:00'],
+]);

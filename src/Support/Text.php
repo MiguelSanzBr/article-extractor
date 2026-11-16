@@ -36,26 +36,17 @@ final class Text
         $b = mb_str_split(mb_strtolower($b, 'UTF-8'), 1, 'UTF-8');
         $longest = max(count($a), count($b));
 
-        if ($a === [] || $b === []) {
-            return 0.0;
-        }
-
-        return 1 - self::distance($a, $b) / $longest;
+        return $longest === 0 ? 0.0 : 1 - self::distance($a, $b) / $longest;
     }
 
     /**
+     * Levenshtein por caractere (o nativo conta bytes). O(n·m), chamado só pra textos curtos.
+     *
      * @param list<string> $a
      * @param list<string> $b
      */
     private static function distance(array $a, array $b): int
     {
-        $alphabet = array_flip(array_values(array_unique([...$a, ...$b])));
-
-        // até 256 caracteres distintos cabem em 1 byte cada, e aí o levenshtein nativo serve
-        if (count($alphabet) <= 256) {
-            return levenshtein(self::encode($a, $alphabet), self::encode($b, $alphabet));
-        }
-
         $previous = range(0, count($b));
         foreach ($a as $i => $charA) {
             $current = [$i + 1];
@@ -66,19 +57,5 @@ final class Text
         }
 
         return $previous[count($b)];
-    }
-
-    /**
-     * @param list<string> $chars
-     * @param array<string, int> $alphabet
-     */
-    private static function encode(array $chars, array $alphabet): string
-    {
-        $bytes = '';
-        foreach ($chars as $char) {
-            $bytes .= chr($alphabet[$char]);
-        }
-
-        return $bytes;
     }
 }

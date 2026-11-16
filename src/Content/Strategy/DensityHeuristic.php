@@ -52,7 +52,7 @@ final class DensityHeuristic implements ContentStrategy
         $elements = [];
         $scores = [];
         foreach ($root->querySelectorAll('p') as $paragraph) {
-            $length = Text::length(Text::clean($paragraph->textContent) ?? '');
+            $length = Text::length((string) Text::clean($paragraph->textContent));
             $parent = $paragraph->parentElement;
             if ($length < self::MIN_PARAGRAPH || $parent === null) {
                 continue;
@@ -72,12 +72,13 @@ final class DensityHeuristic implements ContentStrategy
 
     private function linkDensity(Element $element): float
     {
-        $text = Text::length(Text::clean($element->textContent) ?? '');
+        $text = Text::length((string) Text::clean($element->textContent));
         $linked = 0;
         foreach ($element->querySelectorAll('a') as $link) {
-            $linked += Text::length(Text::clean($link->textContent) ?? '');
+            $linked += Text::length((string) Text::clean($link->textContent));
         }
 
-        return $text === 0 ? 1.0 : $linked / $text;
+        // todo candidato tem ao menos um parágrafo de 20+ caracteres, então $text > 0
+        return $linked / $text;
     }
 }

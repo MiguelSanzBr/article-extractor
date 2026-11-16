@@ -105,3 +105,28 @@ it('não expande entidade externa', function () {
 
     expect(FeedParser::parse($xml, 'https://a.example/feed')->items[0]->title)->toBeNull();
 });
+
+it('lê data sem fuso no fuso informado e aceita espaço antes da declaração XML', function () {
+    $xml = "  \n<?xml version=\"1.0\"?><rss><channel><item><link>https://a.example/noticia/x</link><pubDate>2026-03-05T10:00:00</pubDate></item></channel></rss>";
+
+    expect(FeedParser::parse($xml, 'https://a.example/feed', new DateTimeZone('America/Sao_Paulo'))->items[0]->publishedAt?->format('c'))
+        ->toBe('2026-03-05T13:00:00+00:00');
+});
+
+it('usa o primeiro link alternate da entrada Atom', function () {
+    $xml = '<feed xmlns="http://www.w3.org/2005/Atom"><entry><link rel="alternate" href="https://a.example/um"/><link href="https://a.example/dois"/></entry></feed>';
+
+    expect(FeedParser::parse($xml, 'https://a.example/feed')->items[0]->url)->toBe('https://a.example/um');
+});
+
+it('ignora sitemap filho sem loc', function () {
+    $xml = '<sitemapindex><sitemap><lastmod>2026-01-01</lastmod></sitemap><sitemap><loc>https://a.example/s.xml</loc></sitemap></sitemapindex>';
+
+    expect(FeedParser::parse($xml, 'https://a.example/index.xml')->sitemaps)->toHaveCount(1);
+});
+
+it('aceita BOM colado na declaração XML ou seguido de espaço', function (string $afterBom) {
+    $xml = "\u{FEFF}{$afterBom}<?xml version=\"1.0\"?><rss><channel><item><link>https://a.example/noticia/x</link></item></channel></rss>";
+
+    expect(FeedParser::parse($xml, 'https://a.example/feed')->items)->toHaveCount(1);
+})->with(['', "\n  "]);

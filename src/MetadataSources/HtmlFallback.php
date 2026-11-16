@@ -127,7 +127,7 @@ final class HtmlFallback implements MetadataSource
                 $crumbs[] = $text;
             }
         }
-        $crumbs = array_slice(array_values(array_unique($crumbs)), 0, 3);
+        $crumbs = array_slice(array_unique($crumbs), 0, 3);
 
         return $crumbs === [] ? null : implode(', ', $crumbs);
     }

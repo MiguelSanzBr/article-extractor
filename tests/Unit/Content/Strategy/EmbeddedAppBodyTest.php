@@ -50,3 +50,31 @@ it('não devolve nada sem objeto de artigo ou sem payload', function (string $bo
     '<script>Fusion.globalContent={"headlines":{"basic":"Sem corpo"}};</script>',
     '<p>nada</p>',
 ]);
+
+it('pula corpo vazio ou só de espaço e usa a próxima chave', function (string $empty) {
+    $content = implode('', array_map(static fn(int $i): string => '<p>' . SENTENCE . " {$i}.</p>", range(1, 5)));
+    $page = page('', '<script id="__NEXT_DATA__" type="application/json">' . json_encode(['props' => ['pageProps' => ['post' => ['body' => $empty, 'content' => $content]]]]) . '</script>');
+
+    expect((new EmbeddedAppBody())->extract($page))->toHaveCount(5);
+})->with(['', '   ']);
+
+it('não procura corpo em outro objeto depois de achar o do artigo', function () {
+    $content = implode('', array_map(static fn(int $i): string => '<p>' . SENTENCE . " {$i}.</p>", range(1, 5)));
+    $page = page('', '<script id="__NEXT_DATA__" type="application/json">' . json_encode(['props' => ['pageProps' => ['article' => ['title' => 'x'], 'post' => ['content' => $content]]]]) . '</script>');
+
+    expect((new EmbeddedAppBody())->extract($page))->toBe([]);
+});
+
+it('aceita título de 3 e texto de 20 caracteres no Arc XP', function () {
+    $blocks = (new EmbeddedAppBody())->extract(fusionPage([
+        ['type' => 'header', 'content' => 'ab'],
+        ['type' => 'header', 'content' => 'abc'],
+        ['type' => 'text', 'content' => str_repeat('x', 19)],
+        ['type' => 'text', 'content' => str_repeat('y', 20)],
+        ['type' => 'text', 'content' => SENTENCE . ' um, ' . SENTENCE],
+        ['type' => 'text', 'content' => SENTENCE . ' dois, ' . SENTENCE],
+        ['type' => 'text', 'content' => SENTENCE . ' três.'],
+    ]));
+
+    expect(array_map(static fn($b) => $b->text, array_slice($blocks, 0, 2)))->toBe(['abc', str_repeat('y', 20)]);
+});

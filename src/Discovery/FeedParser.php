@@ -29,7 +29,7 @@ final class FeedParser
     public static function parse(string $xml, string $feedUrl, ?DateTimeZone $assume = null): FeedDocument
     {
         $assume ??= new DateTimeZone('UTC');
-        $root = self::root(ltrim((string) preg_replace('/^\xEF\xBB\xBF/', '', $xml)));
+        $root = self::root(ltrim(str_starts_with($xml, "\u{FEFF}") ? substr($xml, 3) : $xml));
 
         if ($root->localName === 'sitemapindex') {
             return new FeedDocument([], self::sitemaps($root, $feedUrl, $assume));
@@ -122,12 +122,8 @@ final class FeedParser
 
     private static function newestFirst(?DateTimeImmutable $a, ?DateTimeImmutable $b): int
     {
-        return match (true) {
-            $a === null && $b === null => 0,
-            $a === null => 1,
-            $b === null => -1,
-            default => $b <=> $a,
-        };
+        // sem data conta como o mais velho de todos, então vai pro fim
+        return ($b?->getTimestamp() ?? PHP_INT_MIN) <=> ($a?->getTimestamp() ?? PHP_INT_MIN);
     }
 
     /**
@@ -137,10 +133,14 @@ final class FeedParser
      */
     private static function descendants(Element $root, array $names): array
     {
-        return array_values(array_filter(
-            iterator_to_array($root->getElementsByTagNameNS('*', '*'), false),
-            static fn(Element $element): bool => in_array($element->localName, $names, true),
-        ));
+        $found = [];
+        foreach ($names as $name) {
+            foreach ($root->getElementsByTagNameNS('*', $name) as $element) {
+                $found[] = $element;
+            }
+        }
+
+        return $found;
     }
 
     /**

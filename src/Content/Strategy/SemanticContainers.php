@@ -21,10 +21,13 @@ final class SemanticContainers implements ContentStrategy
     public function extract(Page $page): array
     {
         $best = [];
-        $bestScore = 0.0;
+        $bestScore = -INF;
         foreach ($page->document->querySelectorAll('article, [role="main"], main') as $container) {
             $blocks = BlockExtractor::fromElement($container);
-            $score = Quality::accepts($blocks) ? $this->score($blocks) : 0.0;
+            if (!Quality::accepts($blocks)) {
+                continue;
+            }
+            $score = $this->score($blocks);
             if ($score > $bestScore) {
                 [$best, $bestScore] = [$blocks, $score];
             }
@@ -45,14 +48,9 @@ final class SemanticContainers implements ContentStrategy
         $body = count(array_filter($blocks, static fn(Block $b): bool => $b->type->isBody()));
         $headings = count(array_filter($blocks, static fn(Block $b): bool => $b->type === BlockType::Heading));
 
-        $score = $chars * 1.0;
-        if ($body > 3 && $chars / $body < 80) {
-            $score *= 0.3;
-        }
-        if ($headings > 3 && $headings >= $body) {
-            $score *= 0.2;
-        }
+        $teaserList = $body > 3 && $chars / $body < 80;
+        $indexPage = $headings > 3 && $headings >= $body;
 
-        return $score;
+        return $chars * ($teaserList ? 0.3 : 1.0) * ($indexPage ? 0.2 : 1.0);
     }
 }

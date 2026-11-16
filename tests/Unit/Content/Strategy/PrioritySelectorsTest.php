@@ -24,3 +24,17 @@ it('não devolve nada abaixo do piso ou sem seletor conhecido', function (string
     '<div class="entry-content">' . '<p>Só um parágrafo curto de teaser aqui, nada mais.</p>' . '</div>',
     '<div class="qualquer">' . paragraphs(6) . '</div>',
 ]);
+
+it('o maior candidato vence mesmo vindo antes, e no empate fica o primeiro', function () {
+    $strategy = new PrioritySelectors();
+
+    expect($strategy->extract(page('', '<div class="article-body">' . paragraphs(6, 'Longo') . '</div><div class="entry-content">' . paragraphs(4, 'Curto') . '</div>'))[0]->text)->toStartWith('Longo 1')
+        ->and($strategy->extract(page('', '<div class="article-body">' . paragraphs(4, 'Prim') . '</div><div class="entry-content">' . paragraphs(4, 'Segu') . '</div>'))[0]->text)->toStartWith('Prim 1');
+});
+
+it('aceita corpo de exatamente 300 caracteres e recusa 299', function () {
+    $strategy = new PrioritySelectors();
+
+    expect($strategy->extract(page('', '<div class="entry-content"><p>' . str_repeat('a', 300) . '</p></div>')))->toHaveCount(1)
+        ->and($strategy->extract(page('', '<div class="entry-content"><p>' . str_repeat('a', 299) . '</p></div>')))->toBe([]);
+});

@@ -90,3 +90,9 @@ it('aceita HTML vazio', function () {
 it('recusa URL que não é http(s)', function () {
     Extractor::create()->extract('<p>x</p>', 'ftp://a.test/x');
 })->throws(InvalidArgumentException::class);
+
+it('cai no último recurso quando o texto está espalhado em blocos soltos', function () {
+    $scattered = implode('', array_map(static fn(int $i): string => "<section><div><p>Trecho {$i} da matéria espalhado em um bloco solto, com texto suficiente para contar.</p></div></section>", range(1, 4)));
+
+    expect(Extractor::create()->extract("<html><body>{$scattered}</body></html>", 'https://a.test/x')->strategy)->toBe('paragraph-fallback');
+});

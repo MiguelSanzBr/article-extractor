@@ -6,6 +6,7 @@ namespace ArticleExtractor\MetadataSources;
 
 use ArticleExtractor\Metadata;
 use ArticleExtractor\Page;
+use ArticleExtractor\Support\Text;
 use DateTimeZone;
 
 final class MetaTags implements MetadataSource
@@ -24,7 +25,7 @@ final class MetaTags implements MetadataSource
             siteName: Fields::meta($page, 'og:site_name') ?? Fields::meta($page, 'application-name'),
             section: Fields::meta($page, 'article:section'),
             tags: Fields::terms([...Fields::metaAll($page, 'article:tag'), ...Fields::metaAll($page, 'keywords'), ...Fields::metaAll($page, 'news_keywords')]),
-            language: Fields::language(Fields::meta($page, 'og:locale') ?? $page->document->documentElement?->getAttribute('lang')),
+            language: Fields::language(Fields::meta($page, 'og:locale') ?? Text::clean($page->document->documentElement?->getAttribute('lang'))),
             canonical: Fields::url($canonical, $page) ?? Fields::url(Fields::meta($page, 'og:url'), $page),
         );
     }

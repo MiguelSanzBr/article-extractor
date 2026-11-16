@@ -50,7 +50,7 @@ final readonly class Page
     {
         $items = [];
         foreach ($document->querySelectorAll('script[type="application/ld+json"]') as $script) {
-            $data = Json::decode($script->textContent ?? '');
+            $data = Json::decode($script->textContent);
             if ($data === null) {
                 continue;
             }
@@ -93,7 +93,7 @@ final readonly class Page
      */
     private static function nextPageProps(HTMLDocument $document): ?array
     {
-        $data = Json::decode($document->querySelector('script#__NEXT_DATA__')->textContent ?? '');
+        $data = Json::decode($document->querySelector('script#__NEXT_DATA__')?->textContent);
         $props = $data['props'] ?? null;
         $pageProps = is_array($props) ? ($props['pageProps'] ?? null) : null;
 

@@ -31,3 +31,7 @@ it('resolve href relativo ao protocolo e ignora feed de comentário pelo endere�
 it('não acha nada numa home sem feed', function () {
     expect(FeedLinkFinder::find('<html><body><p>oi</p></body></html>', 'https://a.com/'))->toBe([]);
 });
+
+it('ignora feed de comentários pelo título', function () {
+    expect(FeedLinkFinder::find('<link rel="alternate" type="application/rss+xml" title="Comentários do post" href="/feed/c">', 'https://a.com/'))->toBe([]);
+});

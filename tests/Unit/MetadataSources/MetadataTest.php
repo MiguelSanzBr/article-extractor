@@ -25,3 +25,11 @@ it('começa vazio', function () {
         ->and($empty->tags)->toBe([])
         ->and($empty->canonical)->toBeNull();
 });
+
+it('não troca nenhum campo que já tem valor', function () {
+    $first = new Metadata('T', 'S', ['A'], new DateTimeImmutable('2026-01-01'), new DateTimeImmutable('2026-01-02'), 'i', 'site', 'sec', ['t'], 'pt', 'c');
+    $next = new Metadata('T2', 'S2', ['B'], new DateTimeImmutable('2025-01-01'), new DateTimeImmutable('2025-01-02'), 'i2', 'site2', 'sec2', ['t2'], 'en', 'c2');
+
+    expect($first->fillFrom($next))->toEqual($first)
+        ->and(Metadata::empty()->fillFrom($next))->toEqual($next);
+});

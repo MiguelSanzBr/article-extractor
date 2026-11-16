@@ -71,3 +71,23 @@ it('usa o próprio pageProps quando não há objeto de artigo', function () {
 it('devolve vazio sem payload embutido', function () {
     expect(embeddedMeta('<p>nada</p>')->title)->toBeNull();
 });
+
+it('fica com o primeiro objeto de artigo do pageProps', function () {
+    expect(embeddedMeta(nextData(['article' => ['title' => 'Do article'], 'data' => ['title' => 'Do data']]))->title)->toBe('Do article');
+});
+
+it('lê cada nome alternativo de campo no Next', function (array $post, string $field, mixed $expected) {
+    $meta = embeddedMeta(nextData(['post' => $post]));
+    $value = $meta->{$field};
+
+    expect($value instanceof DateTimeImmutable ? $value->format('Y-m-d') : $value)->toBe($expected);
+})->with([
+    [['description' => 'Desc'], 'subtitle', 'Desc'],
+    [['summary' => 'Sum'], 'subtitle', 'Sum'],
+    [['author' => 'Ana Lima'], 'authors', ['Ana Lima']],
+    [['published_at' => '2026-03-01'], 'publishedAt', '2026-03-01'],
+    [['date' => '2026-03-02'], 'publishedAt', '2026-03-02'],
+    [['modified_at' => '2026-03-03'], 'modifiedAt', '2026-03-03'],
+    [['image' => '/i.jpg'], 'image', 'https://a.com/i.jpg'],
+    [['cover' => ['url' => '/c.jpg']], 'image', 'https://a.com/c.jpg'],
+]);

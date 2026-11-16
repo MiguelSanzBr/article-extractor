@@ -32,3 +32,8 @@ it('tudo vazio para HTML vazio', function () {
     expect(MetadataExtractor::default()->extract(ArticleExtractor\Page::parse('', 'https://a.com/'), utc()))
         ->toEqual(ArticleExtractor\Metadata::empty());
 });
+
+it('usa Twitter Card e estado de app quando são a única fonte', function () {
+    expect(extractMeta('<meta name="twitter:title" content="Do Twitter">')->title)->toBe('Do Twitter')
+        ->and(extractMeta('', '<script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"post":{"title":"Do Next"}}}}</script>')->title)->toBe('Do Next');
+});

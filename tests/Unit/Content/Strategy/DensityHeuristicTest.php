@@ -32,3 +32,59 @@ it('soma no avô os parágrafos que vêm cada um num wrapper', function () {
 it('não devolve nada quando nenhum candidato passa no piso', function () {
     expect((new DensityHeuristic())->extract(page('', '<div><p>Curto.</p><p>Pouco texto aqui mesmo.</p></div>')))->toBe([]);
 });
+
+function linkedParagraphs(int $count, int $plain, int $linked): string
+{
+    $html = '';
+    for ($i = 1; $i <= $count; $i++) {
+        $html .= '<p>' . str_repeat('t', $plain - 1) . $i . '<a href="/x">' . str_repeat('l', $linked) . '</a></p>';
+    }
+
+    return $html;
+}
+
+it('aceita container com exatamente 25% do texto em link', function () {
+    expect((new DensityHeuristic())->extract(page('', '<div>' . linkedParagraphs(4, 75, 25) . '</div>')))->toHaveCount(4);
+});
+
+it('recusa bloco de chamadas longas que são quase só link', function () {
+    $related = linkedParagraphs(4, 30, 200);
+
+    $blocks = (new DensityHeuristic())->extract(page('', "<div class=\"col\">{$related}</div><div class=\"txt\">" . paragraphs(4) . '</div>'));
+
+    expect($blocks[0]->text ?? '')->toStartWith('Parágrafo 1');
+});
+
+it('link de ícone sem texto não conta como link', function () {
+    $icons = str_repeat('<a href="/s"></a>', 20);
+
+    expect((new DensityHeuristic())->extract(page('', "<div>{$icons}" . paragraphs(4) . '</div>')))->toHaveCount(4);
+});
+
+it('parágrafo curto no começo não interrompe a busca', function () {
+    expect((new DensityHeuristic())->extract(page('', '<p>Curto.</p><div>' . paragraphs(4) . '</div>')))->toHaveCount(4);
+});
+
+it('soma todos os parágrafos do container', function () {
+    $single = '<div class="b"><p>' . str_repeat('Um parágrafo só, longo. ', 13) . '</p></div>';
+
+    expect((new DensityHeuristic())->extract(page('', $single . '<div class="a">' . paragraphs(6) . '</div>')))->toHaveCount(6);
+});
+
+it('conta parágrafo de exatamente 20 caracteres', function () {
+    $twenty = implode('', array_map(static fn(int $i): string => '<p>' . str_pad("p{$i}", 20, 'x') . '</p>', range(1, 16)));
+
+    expect((new DensityHeuristic())->extract(page('', "<div>{$twenty}</div>")))->toHaveCount(16);
+});
+
+it('parágrafo curto não dá ponto ao container', function () {
+    $short = str_repeat('<p>Curtinho aqui.</p>', 40);
+    $long = '<p>' . str_repeat('Texto longo de um bloco com chamadas curtas. ', 4) . '</p><p>' . str_repeat('Outro trecho longo do mesmo bloco aqui. ', 4) . '</p>';
+
+    expect((new DensityHeuristic())->extract(page('', "<div class=\"x\">{$short}{$long}</div><div class=\"y\">" . paragraphs(4) . '</div>'))[0]->text)
+        ->toStartWith('Parágrafo 1');
+});
+
+it('parágrafo vazio não quebra a pontuação', function () {
+    expect((new DensityHeuristic())->extract(page('', '<div><p></p><p>   </p>' . paragraphs(4) . '</div>')))->toHaveCount(4);
+});

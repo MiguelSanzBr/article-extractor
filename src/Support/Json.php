@@ -9,9 +9,9 @@ final class Json
     /**
      * @return array<mixed>|null
      */
-    public static function decode(string $json): ?array
+    public static function decode(?string $json): ?array
     {
-        $value = json_decode($json, true);
+        $value = json_decode($json ?? '', true);
 
         return is_array($value) ? $value : null;
     }

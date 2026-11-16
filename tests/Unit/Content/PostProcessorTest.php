@@ -48,3 +48,32 @@ it('mantém a sequência quando não há parágrafo antes ou longo depois', func
     expect(PostProcessor::process($atStart, Metadata::empty()))->toBe($atStart)
         ->and(PostProcessor::process($noLongAfter, Metadata::empty()))->toBe($noLongAfter);
 });
+
+it('só remove a partir de semelhança acima de 90%', function () {
+    $meta = new Metadata(title: 'abcdefghij');
+
+    expect(PostProcessor::process([p('abcdefghiX'), p(BODY)], $meta))->toHaveCount(2)
+        ->and(PostProcessor::process([p('abcdefghij.'), p(BODY)], $meta))->toHaveCount(1);
+});
+
+it('sequência de chamadas no fim da lista fica como está', function () {
+    $blocks = [p(BODY), h('A'), p('Curto um.'), h('B'), p('Curto dois.')];
+
+    expect(PostProcessor::process($blocks, Metadata::empty()))->toBe($blocks);
+});
+
+it('chamada com texto de 200 caracteres ou mais não é teaser', function () {
+    $blocks = [p(BODY), h('A'), p(str_repeat('x', 200)), h('B'), p('Curto dois.'), p(BODY . ' fim')];
+    $short = [p(BODY), h('A'), p(str_repeat('x', 199)), h('B'), p('Curto dois.'), p(BODY . ' fim')];
+
+    expect(PostProcessor::process($blocks, Metadata::empty()))->toBe($blocks)
+        ->and(PostProcessor::process($short, Metadata::empty()))->toHaveCount(2);
+});
+
+it('o parágrafo depois da sequência precisa ter mais de 100 caracteres', function () {
+    $exactly100 = [p(BODY), h('A'), p('Curto um.'), h('B'), p('Curto dois.'), p(str_repeat('y', 100))];
+    $over100 = [p(BODY), h('A'), p('Curto um.'), h('B'), p('Curto dois.'), p(str_repeat('y', 101))];
+
+    expect(PostProcessor::process($exactly100, Metadata::empty()))->toBe($exactly100)
+        ->and(PostProcessor::process($over100, Metadata::empty()))->toHaveCount(2);
+});

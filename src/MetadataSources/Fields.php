@@ -88,7 +88,7 @@ final class Fields
      */
     public static function language(?string $value): ?string
     {
-        if ($value === null || preg_match('/^([a-z]{2,3})(?:[-_]([a-z]{2}))?$/i', trim($value), $m) !== 1) {
+        if ($value === null || preg_match('/^([a-z]{2,3})(?:[-_]([a-z]{2}))?$/i', $value, $m) !== 1) {
             return null;
         }
 

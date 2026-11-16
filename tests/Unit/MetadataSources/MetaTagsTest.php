@@ -66,3 +66,11 @@ it('normaliza o idioma do og:locale ou do html lang', function () {
 it('ignora meta vazia', function () {
     expect(metaTags('<meta property="og:title" content="   ">')->title)->toBeNull();
 });
+
+it('lê autor só do article:author quando ele é nome', function () {
+    expect(metaTags('<meta property="article:author" content="Ana Lima">')->authors)->toBe(['Ana Lima']);
+});
+
+it('apara espaço em volta do idioma', function () {
+    expect(metaTags('<meta property="og:locale" content=" pt_BR ">')->language)->toBe('pt-BR');
+});

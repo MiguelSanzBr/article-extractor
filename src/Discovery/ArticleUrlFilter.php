@@ -24,11 +24,11 @@ final class ArticleUrlFilter
     public static function accepts(string $url): bool
     {
         $parts = parse_url($url);
-        if ($parts === false || !isset($parts['host']) || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
+        if (!isset($parts['host']) || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
             return false;
         }
         $path = rtrim($parts['path'] ?? '', '/');
-        $segments = array_map(strtolower(...), explode('/', trim($path, '/')));
+        $segments = array_map(strtolower(...), explode('/', $path));
 
         return Text::length($path) >= self::MIN_PATH
             && array_intersect($segments, self::LISTING_SEGMENTS) === []

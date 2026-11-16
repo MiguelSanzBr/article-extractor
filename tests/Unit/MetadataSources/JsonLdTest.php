@@ -70,3 +70,11 @@ it('um campo de tipo estranho não derruba os outros', function () {
 it('devolve vazio sem artigo JSON-LD', function () {
     expect((new JsonLd())->read(page(ld(['@type' => 'Organization', 'name' => 'X'])), utc())->title)->toBeNull();
 });
+
+it('mantém a ordem dos autores sem repetir', function () {
+    expect(jsonLdMeta(['author' => ['Ana', 'Ana', 'Bruno']])->authors)->toBe(['Ana', 'Bruno']);
+});
+
+it('não desce mais de dois níveis atrás da imagem', function () {
+    expect(jsonLdMeta(['image' => [[['/fundo.jpg']]]])->image)->toBeNull();
+});

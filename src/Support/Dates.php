@@ -10,7 +10,7 @@ use Exception;
 
 final class Dates
 {
-    private const string BRAZILIAN = '~^(\d{1,2})[/.](\d{1,2})[/.](\d{4})(?:,?\s+(?:às\s+)?(\d{1,2})[:h](\d{2}))?$~u';
+    private const string BRAZILIAN = '~^(?<day>\d{1,2})[/.](?<month>\d{1,2})[/.](?<year>\d{4})(?:,?\s+(?:às\s+)?(?<hour>\d{1,2})[:h](?<minute>\d{2}))?$~u';
 
     private const string ISO = '/^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?(?:Z|[+-]\d{2}:?\d{2})?$/i';
 
@@ -26,7 +26,7 @@ final class Dates
         $raw = trim((string) $raw);
 
         if (preg_match(self::BRAZILIAN, $raw, $m) === 1) {
-            [$day, $month, $year, $hour, $minute] = [(int) $m[1], (int) $m[2], (int) $m[3], (int) ($m[4] ?? 0), (int) ($m[5] ?? 0)];
+            [$day, $month, $year, $hour, $minute] = [(int) $m['day'], (int) $m['month'], (int) $m['year'], (int) ($m['hour'] ?? 0), (int) ($m['minute'] ?? 0)];
             if (!checkdate($month, $day, $year) || $hour > 23 || $minute > 59) {
                 return null;
             }
@@ -37,16 +37,16 @@ final class Dates
             } catch (Exception) {
                 return null;
             }
-            $errors = DateTimeImmutable::getLastErrors();
-            if ($errors !== false && $errors['warning_count'] > 0) {
+            // getLastErrors() só não é false quando houve aviso, ex.: 2026-02-31 virando 3 de março
+            if (DateTimeImmutable::getLastErrors() !== false) {
                 return null;
             }
         } else {
             return null;
         }
 
-        $year = (int) $date->format('Y');
-        if ($year < 1990 || $year > 2100) {
+        $year = $date->format('Y');
+        if ($year < '1990' || $year > '2100') {
             return null;
         }
 

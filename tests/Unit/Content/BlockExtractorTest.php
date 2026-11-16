@@ -97,3 +97,36 @@ it('mantém parágrafo longo mesmo quando quase todo o texto é link', function 
 
     expect(blocksOf("<article><p>Ver <a href=\"/x\">{$linked}</a></p></article>"))->toHaveCount(1);
 });
+
+it('item, citação e legenda com texto além do parágrafo viram só o parágrafo', function () {
+    expect(blocksOf('<article><ul><li><p>Parágrafo dentro do item da lista</p> e um texto solto depois</li></ul>'
+        . '<blockquote><p>Parágrafo dentro da citação do texto</p> — Fulano de Tal, autor</blockquote>'
+        . '<figure><figcaption><p>Parágrafo dentro da legenda da foto</p> Foto: Agência Exemplo</figcaption></figure></article>'))
+        ->toBe([
+            ['list_item', 'Parágrafo dentro do item da lista'],
+            ['quote', 'Parágrafo dentro da citação do texto'],
+            ['caption', 'Parágrafo dentro da legenda da foto'],
+        ]);
+});
+
+it('citação com lista dentro não repete o texto dos itens', function () {
+    expect(blocksOf('<article><blockquote>Citação com uma lista logo abaixo dela<ul><li>Primeiro item da lista citada</li></ul></blockquote></article>'))
+        ->toBe([['quote', 'Citação com uma lista logo abaixo dela'], ['list_item', 'Primeiro item da lista citada']]);
+});
+
+it('título é link a partir de 80% do texto em link direto', function () {
+    expect(blocksOf('<article><h2><a href="/x">ABCDEFGH</a>IJ</h2></article>'))->toBe([])
+        ->and(blocksOf('<article><h2><a href="/x">ABCDEFG</a>HIJ</h2></article>'))->toBe([['heading', 'ABCDEFGHIJ']])
+        ->and(blocksOf('<article><h2><span><a href="/x">Título todo em link aninhado</a></span></h2></article>'))->toBe([['heading', 'Título todo em link aninhado']]);
+});
+
+it('parágrafo conta link aninhado e ignora link vazio', function () {
+    expect(blocksOf('<article><p>Veja <strong><a href="/x">uma matéria relacionada com título comprido</a></strong></p></article>'))->toBe([])
+        ->and(blocksOf('<article><p><a href="#"></a><a href="#"></a>Um parágrafo curto com ícones de link</p></article>'))->toHaveCount(1);
+});
+
+it('parágrafo de exatamente 200 caracteres não é bloco de link', function () {
+    $linked = str_repeat('l', 196);
+
+    expect(blocksOf("<article><p>Ver <a href=\"/x\">{$linked}</a></p></article>"))->toHaveCount(1);
+});

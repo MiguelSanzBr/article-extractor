@@ -9,6 +9,8 @@ use ArticleExtractor\Support\Url;
 
 final class FeedLinkFinder
 {
+    private const string COMMENTS = '/comment|coment/iu';
+
     private const string LINKS = 'link[rel~="alternate"][type="application/rss+xml"], link[rel~="alternate"][type="application/atom+xml"]';
 
     /**
@@ -23,10 +25,11 @@ final class FeedLinkFinder
         foreach ($page->document->querySelectorAll(self::LINKS) as $link) {
             $href = $link->getAttribute('href') ?? '';
             $url = Url::resolve($page->baseUrl, $href);
-            if ($url === null || isset($feeds[$url]) || preg_match('/comment|coment/iu', $href . ' ' . $link->getAttribute('title')) === 1) {
+            $isComments = preg_match(self::COMMENTS, $href) === 1 || preg_match(self::COMMENTS, $link->getAttribute('title') ?? '') === 1;
+            if ($url === null || isset($feeds[$url]) || $isComments) {
                 continue;
             }
-            $feeds[$url] = new FeedLink($url, str_contains((string) $link->getAttribute('type'), 'atom') ? FeedType::Atom : FeedType::Rss);
+            $feeds[$url] = new FeedLink($url, $link->matches('[type="application/atom+xml"]') ? FeedType::Atom : FeedType::Rss);
         }
 
         return array_values($feeds);

@@ -57,3 +57,25 @@ it('extrai o host em minúsculas', function () {
     expect(Url::host('https://WWW.A.com/x'))->toBe('www.a.com')
         ->and(Url::host('nada'))->toBeNull();
 });
+
+it('aceita base com scheme em maiúsculas e URL com espaço em volta', function () {
+    expect(Url::resolve('HTTPS://a.com/x/', 'y'))->toBe('HTTPS://a.com/x/y')
+        ->and(Url::normalize('  https://a.com/x  '))->toBe('https://a.com/x');
+});
+
+it('não sobe acima da raiz e trata . e .. no fim', function () {
+    expect(Url::resolve('https://a.com/a/b', '../../../x'))->toBe('https://a.com/x')
+        ->and(Url::resolve('https://a.com/x/', '../z'))->toBe('https://a.com/z')
+        ->and(Url::resolve('https://a.com/a/b/', '..'))->toBe('https://a.com/a/')
+        ->and(Url::resolve('https://a.com/a/b/', '.'))->toBe('https://a.com/a/b/');
+});
+
+it('só tira a porta quando é a padrão do scheme', function () {
+    expect(Url::normalize('http://a.com:8080/x'))->toBe('http://a.com:8080/x')
+        ->and(Url::normalize('http://a.com:443/x'))->toBe('http://a.com:443/x')
+        ->and(Url::normalize('https://a.com:80/x'))->toBe('https://a.com:80/x');
+});
+
+it('mantém parâmetro de query sem valor e com = no valor', function () {
+    expect(Url::normalize('https://a.com/x?b=1=2&a'))->toBe('https://a.com/x?a&b=1=2');
+});

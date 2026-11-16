@@ -47,8 +47,8 @@ final class NoiseRules
             return true;
         }
 
-        $names = preg_split('/\s+/', strtolower(($element->getAttribute('class') ?? '') . ' ' . ($element->getAttribute('id') ?? '')), -1, PREG_SPLIT_NO_EMPTY);
-        foreach ($names ?: [] as $name) {
+        preg_match_all('/\S+/', strtolower(($element->getAttribute('class') ?? '') . ' ' . ($element->getAttribute('id') ?? '')), $names);
+        foreach ($names[0] as $name) {
             foreach (self::PATTERNS as $pattern) {
                 if ($name === $pattern || str_starts_with($name, $pattern . '-') || str_starts_with($name, $pattern . '_')) {
                     return true;

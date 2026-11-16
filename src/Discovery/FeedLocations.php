@@ -32,7 +32,7 @@ final class FeedLocations
      */
     public static function candidates(string $homepage): array
     {
-        $origin = rtrim((string) preg_replace('~^(https?://[^/?#]+).*$~i', '$1', Url::normalize($homepage)), '/');
+        $origin = (string) preg_replace('~^(https?://[^/?#]+).*$~i', '$1', Url::normalize($homepage));
 
         return array_map(static fn(array $path): FeedLink => new FeedLink($origin . $path[0], $path[1]), self::PATHS);
     }

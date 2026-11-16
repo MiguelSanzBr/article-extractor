@@ -47,7 +47,7 @@
         "lint:check": "pint --test",
         "types": "phpstan analyse --no-progress --memory-limit=1G",
         "coverage": "pest --coverage --min=100",
-        "mutate": "pest --mutate --covered-only --parallel --min=97"
+        "mutate": "pest --mutate --path=src --covered-only --parallel --min=97"
     },
     "config": {
         "sort-packages": true,

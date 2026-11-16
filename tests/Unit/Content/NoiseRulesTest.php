@@ -71,3 +71,17 @@ it('reconhece carimbo de data e mantém frase que só começa com data', functio
     ['Por Ana Lima, da redação', false],
     ['05/03/2026 ' . str_repeat('x', 80), false],
 ]);
+
+it('olha classe e id separados', function () {
+    expect(NoiseRules::isNoise(firstElement('<div class="x" id="sidebar">x</div>')))->toBeTrue()
+        ->and(NoiseRules::isNoise(firstElement('<div class="side" id="bar">x</div>')))->toBeFalse();
+});
+
+it('carimbo de data tem até 80 caracteres e até 6 palavras', function () {
+    $stamp = 'Publicado em 05/03/2026 ';
+
+    expect(NoiseRules::isDateStamp($stamp . str_repeat('-', 80 - mb_strlen($stamp))))->toBeTrue()
+        ->and(NoiseRules::isDateStamp($stamp . str_repeat('-', 81 - mb_strlen($stamp))))->toBeFalse()
+        ->and(NoiseRules::isDateStamp('Publicado em 05/03/2026 às 10h30 por Ana Lima'))->toBeTrue()
+        ->and(NoiseRules::isDateStamp('Publicado em 05/03/2026 às 10h30 por Ana de Lima'))->toBeFalse();
+});

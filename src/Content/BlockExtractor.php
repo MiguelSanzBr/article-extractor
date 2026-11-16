@@ -36,8 +36,8 @@ final class BlockExtractor
         $seen = [];
         foreach ($clone->querySelectorAll(self::CANDIDATES) as $element) {
             $block = self::block($element);
-            if ($block !== null && !isset($seen[$key = mb_strtolower($block->text)])) {
-                $seen[$key] = true;
+            if ($block !== null && !in_array($key = mb_strtolower($block->text), $seen, true)) {
+                $seen[] = $key;
                 $blocks[] = $block;
             }
         }
@@ -116,11 +116,11 @@ final class BlockExtractor
     }
 
     /**
-     * Texto do item sem as sublistas, q viram itens próprios.
+     * Texto sem as listas aninhadas: os itens delas viram blocos próprios.
      */
     private static function ownText(Element $element): string
     {
-        if ($element->localName !== 'li' || $element->querySelector('ul, ol') === null) {
+        if ($element->querySelector('ul, ol') === null) {
             return $element->textContent ?? '';
         }
         $copy = NoiseRules::cleanCopy($element);

@@ -59,3 +59,19 @@ it('roda pelo executável', function () {
     expect(proc_close($process))->toBe(0)
         ->and(json_decode((string) $out, true)['strategy'])->toBe('json-ld');
 });
+
+it('usa o primeiro argumento como URL e termina a saída com quebra de linha', function () {
+    [$code, $out] = runCli(['article-extract', 'https://exemplo.test/primeira', 'https://exemplo.test/segunda'], htmlFixture('wordpress'));
+
+    expect($code)->toBe(0)
+        ->and(json_decode($out, true)['url'])->toBe('https://exemplo.test/primeira')
+        ->and($out)->toEndWith("}\n");
+});
+
+it('explica o erro antes do uso', function () {
+    $usage = "Uso: article-extract <url> [--encoding=<charset>] < pagina.html\n";
+
+    expect(runCli(['article-extract', 'ftp://a.test/x'], '<p>x</p>')[2])->toBe("URL precisa ser http(s) com host: ftp://a.test/x\n{$usage}")
+        ->and(runCli(['article-extract', 'https://a.test/x'], '')[2])->toBe("Nada no stdin: mande o HTML da página.\n{$usage}")
+        ->and(runCli(['article-extract'], '<p>x</p>')[2])->toBe($usage);
+});

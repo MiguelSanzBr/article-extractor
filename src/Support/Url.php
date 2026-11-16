@@ -25,7 +25,7 @@ final class Url
         }
 
         $parts = parse_url($base);
-        if ($parts === false || !isset($parts['scheme'], $parts['host']) || !in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
+        if (!isset($parts['scheme'], $parts['host']) || !in_array(strtolower($parts['scheme']), ['http', 'https'], true)) {
             return null;
         }
 
@@ -47,7 +47,7 @@ final class Url
                 $query = '?' . $parts['query'];
             }
         } elseif (!str_starts_with($path, '/')) {
-            $directory = $basePath === '' ? '/' : substr($basePath, 0, (int) strrpos($basePath, '/') + 1);
+            $directory = $basePath === '' ? '/' : (string) preg_replace('~[^/]*$~', '', $basePath);
             $path = $directory . $path;
         }
 
@@ -62,7 +62,7 @@ final class Url
     {
         $parts = parse_url(trim($url));
         $scheme = strtolower($parts['scheme'] ?? '');
-        if ($parts === false || !isset($parts['host']) || $parts['host'] === '' || !in_array($scheme, ['http', 'https'], true)) {
+        if (!isset($parts['host']) || !in_array($scheme, ['http', 'https'], true)) {
             throw new InvalidArgumentException("URL precisa ser http(s) com host: {$url}");
         }
 
@@ -73,7 +73,7 @@ final class Url
         $pairs = array_filter(
             explode('&', $parts['query'] ?? ''),
             static function (string $pair): bool {
-                $key = strtolower(explode('=', $pair, 2)[0]);
+                $key = strtolower(explode('=', $pair)[0]);
 
                 return $key !== '' && !str_starts_with($key, 'utm_') && !in_array($key, self::TRACKING, true);
             },
@@ -90,7 +90,7 @@ final class Url
     {
         $host = parse_url($url, PHP_URL_HOST);
 
-        return is_string($host) && $host !== '' ? strtolower($host) : null;
+        return is_string($host) ? strtolower($host) : null;
     }
 
     private static function removeDotSegments(string $path): string

@@ -79,3 +79,26 @@ it('devolve vazio para HTML vazio', function () {
         ->and($meta->authors)->toBe([])
         ->and($meta->image)->toBeNull();
 });
+
+it('usa como site só segmento de 3 a 59 caracteres', function (int $length, bool $isSite) {
+    $site = str_repeat('s', $length);
+
+    expect(htmlMeta("<title>Título da matéria | {$site}</title>", '')->siteName)->toBe($isSite ? $site : null);
+})->with([[2, false], [3, true], [59, true], [60, false]]);
+
+it('aceita linha fina de 21 a 499 caracteres', function (int $length, bool $accepted) {
+    $text = str_repeat('a', $length);
+
+    expect(htmlMeta('', "<p class=\"lead\">{$text}</p>")->subtitle)->toBe($accepted ? $text : null);
+})->with([[20, false], [21, true], [499, true], [500, false]]);
+
+it('lê srcset com espaço antes da primeira URL', function () {
+    expect(htmlMeta('', '<figure><img srcset="  /p.jpg 480w, /g.jpg 1024w"></figure>')->image)->toBe('https://a.com/p.jpg');
+});
+
+it('aceita item de breadcrumb de 2 a 49 caracteres e ignora link vazio', function () {
+    $long = str_repeat('x', 49);
+    $tooLong = str_repeat('y', 50);
+
+    expect(htmlMeta('', "<div class=\"breadcrumbs\"><a></a><a>A</a><a>Ab</a><a>{$long}</a><a>{$tooLong}</a></div>")->section)->toBe("Ab, {$long}");
+});

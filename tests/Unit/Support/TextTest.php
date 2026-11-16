@@ -46,3 +46,18 @@ it('mede semelhança mesmo com mais de 256 caracteres distintos', function () {
     expect(Text::similarity($chars, $chars))->toBe(1.0)
         ->and(Text::similarity($chars, mb_substr($chars, 0, 150)))->toBe(0.5);
 });
+
+it('decodifica entidades de aspas do HTML5', function () {
+    expect(Text::clean('d&#39;água &apos;x&apos; &quot;y&quot;'))->toBe('d\'água \'x\' "y"');
+});
+
+it('calcula a distância de edição exata', function () {
+    expect(Text::similarity('kitten', 'sitting'))->toBe(1 - 3 / 7)
+        ->and(Text::similarity('abc', 'abd'))->toBe(1 - 1 / 3)
+        ->and(Text::similarity('abc', 'ab'))->toBe(1 - 1 / 3)
+        ->and(Text::similarity('ab', 'ba'))->toBe(0.0);
+});
+
+it('dá zero quando só o segundo texto é vazio', function () {
+    expect(Text::similarity('abc', ''))->toBe(0.0);
+});
