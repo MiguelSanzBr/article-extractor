@@ -14,7 +14,7 @@ function feed(string $name, string $url = 'https://feed.example/feed'): ArticleE
 /** @return list<string> */
 function urls(array $items): array
 {
-    return array_map(static fn (FeedItem $i): string => $i->url, $items);
+    return array_map(static fn(FeedItem $i): string => $i->url, $items);
 }
 
 it('lê RSS 2.0, usa guid permalink e põe o mais novo primeiro', function () {
@@ -68,7 +68,7 @@ it('lê título e data do sitemap de notícias', function () {
 it('lê índice de sitemap com o mais recente primeiro', function () {
     $doc = feed('sitemap-index', 'https://diario.example/sitemap_index.xml');
 
-    expect(array_map(static fn ($s) => $s->url, $doc->sitemaps))->toBe([
+    expect(array_map(static fn($s) => $s->url, $doc->sitemaps))->toBe([
         'https://diario.example/post-sitemap3.xml',
         'https://diario.example/post-sitemap2.xml',
         'https://diario.example/post-sitemap1.xml',
