@@ -14,7 +14,7 @@ function blocksOf(string $body, string $selector = 'article'): array
     $container = page('', $body)->document->querySelector($selector);
     assert($container !== null);
 
-    return array_map(static fn (Block $b): array => [$b->type->value, $b->text], BlockExtractor::fromElement($container));
+    return array_map(static fn(Block $b): array => [$b->type->value, $b->text], BlockExtractor::fromElement($container));
 }
 
 it('extrai blocos de vários tipos na ordem do documento', function () {
@@ -80,7 +80,7 @@ it('não altera o container original', function () {
 });
 
 it('extrai de fragmento HTML', function () {
-    expect(array_map(static fn (Block $b): string => $b->type->value, BlockExtractor::fromHtmlFragment('<p>' . LONG . '</p><h2>Seção</h2>')))
+    expect(array_map(static fn(Block $b): string => $b->type->value, BlockExtractor::fromHtmlFragment('<p>' . LONG . '</p><h2>Seção</h2>')))
         ->toBe(['paragraph', 'heading']);
 });
 
@@ -90,4 +90,10 @@ it('diz quais tipos são corpo', function () {
         ->and(BlockType::Quote->isBody())->toBeTrue()
         ->and(BlockType::Heading->isBody())->toBeFalse()
         ->and(BlockType::Caption->isBody())->toBeFalse();
+});
+
+it('mantém parágrafo longo mesmo quando quase todo o texto é link', function () {
+    $linked = str_repeat('texto do link que é bem comprido ', 7);
+
+    expect(blocksOf("<article><p>Ver <a href=\"/x\">{$linked}</a></p></article>"))->toHaveCount(1);
 });
