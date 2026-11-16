@@ -1,0 +1,6 @@
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<sitemap><loc>https://diario.example/post-sitemap1.xml</loc><lastmod>2025-12-31T23:00:00+00:00</lastmod></sitemap>
+<sitemap><loc>https://diario.example/post-sitemap3.xml</loc><lastmod>2026-03-05T12:40:00+00:00</lastmod></sitemap>
+<sitemap><loc>/post-sitemap2.xml</loc><lastmod>2026-02-15T10:00:00+00:00</lastmod></sitemap>
+<sitemap><loc>https://diario.example/page-sitemap.xml</loc></sitemap>
+</sitemapindex>

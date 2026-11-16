@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+<url><loc>https://diario.example/cidade/2026/03/05/bibliotecas-domingo</loc><lastmod>2026-03-05T12:40:00+00:00</lastmod><image:image><image:loc>https://diario.example/b.jpg</image:loc><image:title>Foto da biblioteca</image:title></image:image></url>
+<url><loc>https://diario.example/cultura/2026/03/01/feira-do-livro</loc><lastmod>2026-03-01T13:00:00+00:00</lastmod></url>
+<url><loc>https://diario.example/cidade/2026/03/03/ponte-nova</loc><lastmod>2026-03-03T08:00:00+00:00</lastmod></url>
+</urlset>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+<url><loc>https://jornal.example/politica/camara-aprova-plano</loc><lastmod>2026-03-03T20:00:00Z</lastmod><news:news><news:publication><news:name>Jornal Exemplo</news:name><news:language>pt</news:language></news:publication><news:publication_date>2026-03-03T18:00:00Z</news:publication_date><news:title>Câmara aprova plano de mobilidade</news:title></news:news></url>
+<url><loc>https://jornal.example/cidades/chuva-alaga-zona-norte</loc><news:news><news:publication_date>2026-03-02T21:10:00-03:00</news:publication_date><news:title>Chuva alaga zona norte</news:title></news:news></url>
+</urlset>
